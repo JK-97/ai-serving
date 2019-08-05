@@ -18,9 +18,27 @@ cd src && python3 run.py
 3. API
 
 ```
-    POST  /api/v1/detect {"image_path": "/absolute/path/of/image"}
+    POST  /api/v1alpha/detect {
+                        "path": "/absolute/path/of/image"}
 
 Response: {"result": "[['ai_prediction', 'defined by model', ...]]"}
+```
+
+```
+    GET   /api/v1alpha/switch
+
+Response: {"model": "model name", 
+           "status": "status of loading process",
+           "error": "error message when encounter problem"}
+```
+
+```
+    POST  /api/v1alpha/switch {
+                        "model": "model name", 
+                        "mode": "model type", // this will either be "frozen" or "unfrozen"
+                        "preheat": "whether to preheat session"}  // this will always be True
+
+Response: {"result": "result of switching caller"}, this will either be "succ" or "fail"
 ```
 
 * See example under `test/test_runSession`
@@ -28,16 +46,19 @@ Response: {"result": "[['ai_prediction', 'defined by model', ...]]"}
 
 4. How to Serve an AI model
 
+* First, change `model_path` and `preheat_image_path` in `settings.py`
+
 Prepare a directory that contains following five things, then this model can be served:
 
-* Frozed `.pb` file, normally named as `model.pb`
+* For frozed model
 
 * 5 things need to prepare
-  1. Frozed PB file
+  1. Frozed model.pb file
   2. class.txt
   3. tensor.json
   4. pre_dataprocess.py
   5. post_dataprocess.py
 
 
-5. Fast build AI model
+* Fast build AI model
+  //TODO(arth)
