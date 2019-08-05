@@ -1,0 +1,32 @@
+# Python
+*.egg-info
+*.egg
+*.pyc
+.cache
+.eggs
+build
+dist
+
+# Translations
+*.mo
+
+# Testing
+.tox
+
+# Vagrant
+.vagrant
+.bash_history
+
+html
+
+.docker_env
+
+.env
+.pytest_cache/
+.vscode/
+.idea/
+__pycache__/
+.local_deploy/
+Makefile
+.flake8
+http/
