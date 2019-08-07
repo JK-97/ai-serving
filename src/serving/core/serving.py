@@ -36,6 +36,7 @@ def preDataProcessing(path):
             return grt.PREDP.pre_dataprocess(path)
         except Exception as e:
             logging.critical(e)
+            logging.exception(e)
             raise e
 
 """
@@ -58,6 +59,7 @@ def postDataProcessing(original_image, prediction_dict, classes):
             return grt.POSTDP.post_dataprocess(original_image, prediction_dict, classes)
         except Exception as e:
             logging.critical(e)
+            logging.exception(e)
             raise e
 
 """
@@ -161,6 +163,7 @@ def switchSessionWithModel(model, loader, pb_name, preheat):
 
     except Exception as e:
         logging.error(e)
+        logging.exception(e)
         grt.SESS = None
         grt.SWITCH_STATUS = "failed"
         grt.SWITCH_ERROR = "switch error: {}".format(e)
@@ -214,7 +217,7 @@ def runSingleSession(filepath):
         predict = grt.SESS.run(grt.OUTPUT_TENSOR_VEC, feed_dict=feeding)
         return postDataProcessing(original_image, predict, grt.CLASSES_VEC)
     except Exception as e:
-        logging.debug(e)
-        logging.error("failed to run session")
+        logging.exception(e)
+        logging.error("failed to run session: {}".format(e))
         return None
 
