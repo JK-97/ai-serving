@@ -30,3 +30,10 @@ __pycache__/
 Makefile
 .flake8
 http/
+
+# Compile & Release
+build/
+release-pack/
+srcs.txt
+*.so
+*.c

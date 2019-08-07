@@ -14,8 +14,8 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'model_path': "/home/tx1-node1/ai-demo/ai-service/src/model", 
-    'preheat_image_path': "/home/tx1-node1/ai-demo/ai-service/src/preheat/preheat.jpeg"
+    'model_path': "",
+    'preheat_image_path': ""
 }
 
 
