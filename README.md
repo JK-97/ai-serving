@@ -1,4 +1,10 @@
-1. Deploy 
+[Attention] This repo's git ignored all `*.c` file
+
+0. Release
+
+`python3 build_release.py`
+
+1. Deploy
 
 `cd src && pip3 install -r requirements.txt`
 
