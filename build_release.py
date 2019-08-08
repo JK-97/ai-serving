@@ -8,13 +8,16 @@ if os.path.exists(os.path.join(os.getcwd(), 'release-pack')):
     os.system("rm -r release-pack")
 
 # Building
-print(">> Building...")
+major_ver = "api_v1"
+minor_ver = "alpha"
+
+print(">> Building", major_ver, "/", minor_ver, "...")
 source_files = [
     "serving/core/serving.py",
     "serving/core/runtime.py",
     "serving/urls.py",
     "serving/handler/base.py",
-    "serving/handler/api_v1/alpha/handler.py",
+    "serving/handler/"+major_ver+"/"+minor_ver+"/handler.py",
 ]
 
 srcs = []
