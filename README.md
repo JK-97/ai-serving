@@ -1,4 +1,6 @@
 [Attention] This repo's git ignored all `*.c` file
+[Attention] In some system, protobuf will fallback to pure python implementation, which is *much slower*
+* `export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp` can help
 
 0. Release
 
