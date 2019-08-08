@@ -4,6 +4,9 @@
 """Basic run script"""
 
 import os
+# force protobuf to use cpp-implementation
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'cpp'
+
 from serving.urls import url_patterns
 from settings import settings
 import tornado.ioloop
@@ -33,9 +36,10 @@ def main():
     else:
         logging.getLogger('').setLevel(logging.INFO)
 
+
     if options.profile:
         from google.protobuf.internal import api_implementation
-        logging.warning("Detect protobuf implementation: {}".format(api_implementation.Type()))
+        logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
     try:
         model_path = os.environ['JXSRV_MODEL_PATH']
