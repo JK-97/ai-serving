@@ -134,7 +134,7 @@ def switchSessionWithModel(model, loader, pb_name, preheat):
 
         # load graph configurations
         with open(os.path.join(grt.MODEL_PATH, 'tensor.json')) as tensor_file:
-            grt.TENSOR_MAP = json.loads(tensor_file.read().encode('utf-8'))
+            grt.TENSOR_MAP = json.loads(tensor_file.read())
 
         # load graph
         loader(model, pb_name)
