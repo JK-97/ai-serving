@@ -2,6 +2,17 @@
 [Attention] In some system, protobuf will fallback to pure python implementation, which is *much slower*
 * `export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp` can help
 
+# install requirements
+```
+pip3 install Cython
+
+apt-get -y install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev
+pip3 install -U numpy grpcio absl-py py-cpuinfo psutil portpicker six mock requests gast h5py astor termcolor protobuf keras-applications keras-preprocessing wrapt google-pasta
+pip3 install tensorflow-estimator==1.13.0 tensorboard==1.13.0
+pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v42 tensorflow-gpu==1.13.1+nv19.3
+pip3 install -r src/requirements.txt
+```
+
 0. Release
 
 `python3 build_release.py`
