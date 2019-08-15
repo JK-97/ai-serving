@@ -1,4 +1,0 @@
-{
-  "input": ["input/input_data:0", "input/is_train:0"],
-  "output": ["myoutput1:0", "myoutput2:0", "myoutput3:0"]
-}

@@ -7,7 +7,7 @@ def api_post():
     """
     curl -X POST http://localhost:8080/api/v1alpha/detect -d '{"path": ""}'
     """
-    data = {"path": "/home/tx1-node1/try_fj/pic/1.jpeg"}
+    data = {"path": "/home/admin/to_sd_tf_serving/try/daoxian30.jpg"}
     result = requests.post("http://localhost:8080/api/v1alpha/detect", data=json.dumps(data))
     print(result.json()['result'])
     print(type(result.json()))
