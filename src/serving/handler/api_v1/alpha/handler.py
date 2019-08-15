@@ -1,8 +1,7 @@
-import json
+import rapidjson as json
 import logging, sys
 from serving.handler.base import V1BaseHandler
 from serving.core import runtime
-from serving.core import serving
 
 class DetectHandler(V1BaseHandler):
 
@@ -23,7 +22,7 @@ class DetectHandler(V1BaseHandler):
             data = str(self.request.body, encoding="utf-8")
 
             image_path = json.loads(data)["path"]
-            json_response = serving.runSingleSession(image_path)
+            json_response = runtime.BACKEND.runSingleSession(image_path)
 
             self.finish({"result": json_response})
         except KeyError as e:
@@ -43,10 +42,7 @@ class SwitchModelHandler(V1BaseHandler):
           "error"   : string, error message when failed to load a model
         """
         try:
-            self.finish({
-                "model":  runtime.MODEL_NAME,
-                "status": runtime.SWITCH_STATUS,
-                "error":  runtime.SWITCH_ERROR})
+            self.finish(runtime.BACKEND.reportStatus())
         except KeyError as e:
             logging.exception(e)
             self.send_error_response(status_code=400, message="missing key {}".format(e))
@@ -64,21 +60,19 @@ class SwitchModelHandler(V1BaseHandler):
           "status"  : string <"succ", "fail">, indicate whether a model is found correctly and 
         """
 
-        json_response = None
         try:
             data = str(self.request.body, encoding="utf-8")
             data = json.loads(data)
             
-            preheat = bool(data['preheat'])
-            logging.warning("Force to PRE-HEAT while calling serving.switchModel")
-            ret = serving.switchModel(data['model'], data['mode'])
-            if ret:
-                json_response = "succ"
-            else:
-                json_response = "fail"
-            logging.debug(json_response)
+            ret = runtime.BACKEND.switchModel(data)
 
-            self.finish({"status": json_response})
+            if ret:
+                logging.debug("SwitchModelHandler::Post::SUCC")
+                self.finish({"status": "succ"})
+            else:
+                logging.debug("SwitchModelHandler::Post::FAIL")
+                self.finish({"status": "fail"})
+
         except KeyError as e:
             logging.exception(e)
             self.send_error_response(status_code=400, message="missing key {}".format(e))

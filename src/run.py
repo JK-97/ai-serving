@@ -8,13 +8,16 @@ import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'cpp'
 
 from serving.urls import url_patterns
-from settings import settings
 import tornado.ioloop
 import tornado.options
 from tornado.options import options
 import tornado.web
 import tornado.autoreload
 import logging
+from settings import settings
+from serving import utils
+from serving.core import runtime
+from serving.backend import abstract_backend as ab
 
 enable_better_exceptions = os.getenv("BETTER_EXCEPTIONS")
 
@@ -24,6 +27,18 @@ class TornadoApplication(tornado.web.Application):
     def __init__(self):
         tornado.web.Application.__init__(self, url_patterns, **settings)
 
+
+def newBackendWithCollection(collection):
+    backend = utils.getKeyFromDicts('backend', env_key='JXSRV_BACKEND', validator=ab.validBackend)
+
+    if backend == ab.Type.TfPy:
+        return None
+    if backend == ab.Type.TfSrv:
+        from serving.backend import tensorflow_serving as tfsrv
+        return tfsrv.TfSrvBackend(collection, {
+            'host': utils.getKeyFromDicts('be.tfsrv.host'),
+            'port': utils.getKeyFromDicts('be.tfsrv.rest_port'),
+        })
 
 def main():
     tornado.options.parse_command_line()
@@ -41,27 +56,12 @@ def main():
         from google.protobuf.internal import api_implementation
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
-    try:
-        model_path = os.environ['JXSRV_MODEL_PATH']
-        settings['model_path'] = model_path
-        logging.debug("Overwrite model_path from ENV: {}".format(settings['model_path']))
-    except KeyError as e:
-        pass
-    if settings['model_path'] == "":
-        logging.error("Unset model_path in settings or ENV")
-        exit(-1)
-    logging.debug("Set model_path from settings: {}".format(settings['model_path']))
+    collection_path = utils.getKeyFromDicts('collection_path', env_key='JXSRV_COLLECTION_PATH')
+    utils.getKeyFromDicts('preheat_image', env_key='JXSRV_PREHEAT_IMAGE')
 
-    try:
-        preheat_image_path = os.environ['JXSRV_PREHEAT_IMAGE_PATH']
-        settings['preheat_image_path'] = preheat_image_path
-        logging.debug("Overwrite preheat_image_path from ENV: {}".format(settings['preheat_image_path']))
-    except KeyError as e:
-        pass
-    if settings['preheat_image_path'] == "":
-        logging.error("Unset preheat_image_path in settings or ENV")
-        exit(-1)
-    logging.debug("Set preheat_image_path from settings: {}".format(settings['preheat_image_path']))
+    runtime.BACKEND = newBackendWithCollection(collection_path)
+    assert(runtime.BACKEND != None)
+    logging.debug("Loaded backend: {}".format(runtime.BACKEND))
 
     app = TornadoApplication()
     app.listen(options.port)

@@ -6,7 +6,7 @@
 
 import os
 import sys
-import json
+import rapidjson as json
 import time
 import logging
 import importlib
