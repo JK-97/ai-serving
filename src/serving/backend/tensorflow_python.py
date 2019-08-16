@@ -5,18 +5,14 @@
 """
 
 import os
-import sys
 import rapidjson as json
-import time
 import logging
-import importlib
 import threading
 import tensorflow as tf
 from tornado.options import options
 from enum import Enum, unique
 from serving import utils
 from serving.backend import abstract_backend as ab
-from settings import settings
 
 
 @unique
@@ -41,9 +37,9 @@ class TfPyBackend(ab.AbstractBackend):
         self.output_tensor_vec = []
 
     @utils.profiler_timer("TfPyBackend::switchModel")
-    def switchModel(switch_data):
+    def switchModel(self, switch_data):
         try:
-            host = utils.getKeyFromDicts('model', dicts=switch_data)
+            model = utils.getKeyFromDicts('model', dicts=switch_data)
             model_ty = utils.getKeyFromDicts('mode',
                                              dicts=switch_data,
                                              validator=validModel)
@@ -55,10 +51,10 @@ class TfPyBackend(ab.AbstractBackend):
                 actualSwitcher = self._switchWithFrozenModel
             if model_ty == ModelType.Unfrozen:
                 actualSwitcher = self._switchWithUnfrozenModel
-            assert(actualModelSwitcher != None)
+            assert(actualSwitcher != None)
 
-            th_load = threading.Thread(target=self.switchSessionWithModel,
-                                       args=(model, actualModelSwitcher, preheat))
+            th_load = threading.Thread(target=self._switchModel,
+                                       args=(model, actualSwitcher, preheat))
             th_load.start()
             return True
         except Exception as e:
@@ -69,7 +65,7 @@ class TfPyBackend(ab.AbstractBackend):
             return False
 
     @utils.profiler_timer("TfPyBackend::_switchSessionWithModel")
-    def _switchSessionWithModel(model, loader, preheat):
+    def _switchModel(self, model, loader, preheat):
         try:
             if model == self.current_model_name:
                 return True
@@ -107,11 +103,7 @@ class TfPyBackend(ab.AbstractBackend):
             # preheat neural network
             if preheat == True:
                 self.switch_status = ab.Status.Preheating
-                _, feed_list = preDataProcessing(self.settings['preheat_image_path'])
-                feeding = {}
-                for index, t in enumerate(self.input_tensor_vec):
-                    feeding[t] = feed_list[index]
-                self.session.run(self.output_tensor_vec, feed_dict=feeding)
+                self.runSingleSession(self.settings['preheat'])
             self.switch_status = ab.Status.Loaded
             return True
         except Exception as e:
@@ -149,17 +141,15 @@ class TfPyBackend(ab.AbstractBackend):
     @utils.profiler_timer("TfPyBackend::runSingleSession")
     def runSingleSession(self, filepath):
         try:
-            original_image, feed_list = preDataProcessing(filepath)
+            original_image, feed_list = self.preDataProcessing(filepath)
             feeding = {}
             for index, t in enumerate(self.input_tensor_vec):
                 feeding[t] = feed_list[index]
             #print(feeding)
-            predict = self.session.run(grt.OUTPUT_TENSOR_VEC, feed_dict=feeding)
-            return postDataProcessing(original_image, predict, grt.CLASSES_VEC)
+            predict = self.session.run(self.output_tensor_vec, feed_dict=feeding)
+            return self.postDataProcessing(original_image, predict, self.classes)
         except Exception as e:
             logging.exception(e)
             logging.error("failed to run session: {}".format(e))
             return None
-
-
 

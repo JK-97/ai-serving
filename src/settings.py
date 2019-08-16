@@ -14,13 +14,14 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'backend': "tensorflow-serving",
+    'backend': "tensorflow",
+    'collection_path': "/home/tx1-node1/ai-demo/jxserving/src/model",
+
     'be.tfsrv.host': "127.0.0.1",
     'be.tfsrv.adapter': "restful",
     'be.tfsrv.grpc_port': "8500",
     'be.tfsrv.rest_port': "8501",
 
-    'collection_path': "/home/admin/to_sd_tf_serving/tf_serving/TF_serving1",
-    'preheat_image': "/home/admin/to_sd_tf_serving/try/daoxian30.jpg"
+    'be.tfpy.preheat': "/home/tx1-node1/ai-demo/jxserving/src/preheat/preheat.jpeg",
 }
 
