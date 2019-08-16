@@ -6,7 +6,9 @@
 
 import os
 import abc
+import sys
 import logging
+import importlib
 import rapidjson as json
 from enum import Enum, unique
 from serving import utils
@@ -85,14 +87,14 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     @utils.profiler_timer("AbstractBackend::postDataProcessing")
     def postDataProcessing(self, original_image, prediction_dict, classes):
         if self.postdp:
-            return self.postdp.pre_dataprocess(original_image,
+            return self.postdp.post_dataprocess(original_image,
                                                prediction_dict,
                                                classes)
         else:
             try:
                sys.path.append(self.current_model_path)
                self.postdp = importlib.import_module('post_dataprocess')
-               return self.postdp.pre_dataprocess(original_image,
+               return self.postdp.post_dataprocess(original_image,
                                                   prediction_dict,
                                                   classes)
             except Exception as e:

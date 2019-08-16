@@ -18,9 +18,12 @@ if os.path.exists(os.path.join(os.getcwd(), 'release-pack')):
 # Building
 print(">> Building", major_ver, "/", minor_ver, "...")
 source_files = [
-    "serving/core/serving.py",
+    "serving/backend/abstract_backend.py",
+    "serving/backend/tensorflow_python.py",
+    "serving/backend/tensorflow_serving.py",
     "serving/core/runtime.py",
     "serving/urls.py",
+    "serving/utils.py",
     "serving/handler/base.py",
     "serving/handler/"+major_ver+"/"+minor_ver+"/handler.py",
 ]

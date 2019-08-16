@@ -32,7 +32,10 @@ def newBackendWithCollection(collection):
     backend = utils.getKeyFromDicts('backend', env_key='JXSRV_BACKEND', validator=ab.validBackend)
 
     if backend == ab.Type.TfPy:
-        return None
+        from serving.backend import tensorflow_python as tfpy
+        return tfpy.TfPyBackend(collection, {
+            'preheat': utils.getKeyFromDicts('be.tfpy.preheat')
+        })
     if backend == ab.Type.TfSrv:
         from serving.backend import tensorflow_serving as tfsrv
         return tfsrv.TfSrvBackend(collection, {
@@ -51,15 +54,12 @@ def main():
     else:
         logging.getLogger('').setLevel(logging.INFO)
 
-
     if options.profile:
         from google.protobuf.internal import api_implementation
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
-    collection_path = utils.getKeyFromDicts('collection_path', env_key='JXSRV_COLLECTION_PATH')
-    utils.getKeyFromDicts('preheat_image', env_key='JXSRV_PREHEAT_IMAGE')
-
-    runtime.BACKEND = newBackendWithCollection(collection_path)
+    runtime.BACKEND = newBackendWithCollection(
+            utils.getKeyFromDicts('collection_path', env_key='JXSRV_COLLECTION_PATH'))
     assert(runtime.BACKEND != None)
     logging.debug("Loaded backend: {}".format(runtime.BACKEND))
 
