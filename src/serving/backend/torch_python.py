@@ -74,9 +74,9 @@ class TorchPyBackend(ab.AbstractBackend):
             self.model_object.load_state_dict(parameters)
         self.model_object.eval()
 
-    @utils.profiler_timer("TorchPyBackend::_inference")
-    def _inferData(self, infer_data):
-        return (self.model_object(infer_data['input']))
+    @utils.profiler_timer("TorchPyBackend::_inferData")
+    def _inferData(self, pre_p):
+        return (self.model_object(utils.getKey('inputs', dicts=pre_p)))
 
     def _getDevice(self, load_configs):
         device = utils.getKey('device', dicts=load_configs, level=utils.Access.Optional)

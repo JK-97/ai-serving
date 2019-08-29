@@ -24,7 +24,7 @@ class DetectHandler(V1BaseHandler):
             image_path = json.loads(data)["path"]
             json_response = runtime.BACKEND.inferData(image_path)
 
-            self.finish({"result": json_response})
+            self.finish(json_response)
         except KeyError as e:
             logging.exception(e)
             self.send_error_response(status_code=400, message="missing key {}".format(e))

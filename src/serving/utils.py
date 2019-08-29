@@ -42,29 +42,36 @@ def threads(func):
 
 def getKey(key, dicts, env_key='', v=None, level=Access.Essential):
     value = None
-
-    if (key in dicts) and (dicts[key] != ''):
+    # get Key
+    if key in dicts:
         value = dicts[key]
-        logging.debug("Get <{}> from dicts: {}".format(key, value))
-    if (env_key in os.environ) and (os.environ[env_key] != ''):
+        if isinstance(value, str):
+            logging.debug("Get <{}> from dicts: {}".format(key, value))
+        else:
+            logging.debug("Get <{}> from dicts".format(key))
+    if env_key in os.environ:
         value = os.environ[env_key]
         logging.debug("Overwrite <{}> from environment: {}".format(key, value))
-
-    if value == None:
+    if isinstance(value, str) and value == '':
+        value = None
+    # access level
+    if value is None:
         if level == Access.Essential:
             message = "Failed to get <{}> from dicts or environ".format(key)
             logging.debug(message)
             raise RuntimeError(message)
         if level == Access.Optional:
             logging.debug("Return None for <{}>".format(key))
-
-    if v:
+    # validator
+    if hasattr(v, '__call__'):
         ret, err = v(value)
-        if ret != None: 
+        if ret is not None:
             logging.debug("Pass <{}> on {}: {}".format(key, v, ret))
             value = ret
         else:
-            raise RuntimeError("Validation <{}> failed: {}".format(key, err))
-            value = None
-
+            raise RuntimeError("Validate <{}> failed: {}".format(key, err))
+    else:
+        if v is not None and value != v:
+            raise RuntimeError("Expected {}, but get {}".format(v, value))
+    # return
     return value

@@ -7,16 +7,15 @@ import os
 # force protobuf to use cpp-implementation
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'cpp'
 
-from serving.urls import url_patterns
-import tornado.ioloop
-import tornado.options
-from tornado.options import options
-import tornado.web
-import tornado.autoreload
 import logging
+import tornado.web
+import tornado.ioloop
+import tornado.autoreload
+from tornado.options import options
 from settings import settings
 from serving import utils
 from serving.core import runtime
+from serving.urls import url_patterns
 from serving.backend import abstract_backend as ab
 
 enable_better_exceptions = os.getenv("BETTER_EXCEPTIONS")
@@ -66,7 +65,8 @@ def main():
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
     runtime.BACKEND = newBackendWithCollection(
-            utils.getKey('collection_path', dicts=settings, env_key='JXSRV_COLLECTION_PATH'))
+            utils.getKey('collection_path', dicts=settings,
+                        env_key='JXSRV_COLLECTION_PATH'))
     assert(runtime.BACKEND != None)
     logging.debug("Loaded backend: {}".format(runtime.BACKEND))
 
