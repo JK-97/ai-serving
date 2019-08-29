@@ -11,10 +11,7 @@ def api_get():
     curl -X GET http://localhost:8080/api/v1alpha/switch
     """
     result = requests.get("http://localhost:8080/api/v1alpha/switch")
-    print("model:", result.json()['model'])
-    print("status:", result.json()['status'])
-    if result.json()['status'] == "failed":
-        print("error:", result.json()['error'])
+    print(result.json())
     if result.json()['status'] == "loaded":
         return True
     return False
@@ -28,6 +25,7 @@ def api_post():
     data = {
         "model": sys.argv[1],
         "mode":  sys.argv[2],
+        "device":  sys.argv[3],
         "preheat": True}
     result = requests.post("http://localhost:8080/api/v1alpha/switch", data=json.dumps(data))
     return result

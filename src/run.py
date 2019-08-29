@@ -46,7 +46,8 @@ def newBackendWithCollection(collection):
     if backend == ab.Type.Torch:
         from serving.backend import torch_python as trpy
         return trpy.TorchPyBackend(collection, {
-            'preheat': utils.getKey('be.trpy.preheat', dicts=settings)
+            'preheat': utils.getKey('be.trpy.preheat', dicts=settings),
+            'mixed_mode': utils.getKey('be.trpy.mixed_mode', dicts=settings),
         })
 
 def main():

@@ -1,5 +1,5 @@
-import rapidjson as json
 import logging, sys
+import rapidjson as json
 from serving.handler.base import V1BaseHandler
 from serving.core import runtime
 
@@ -22,7 +22,7 @@ class DetectHandler(V1BaseHandler):
             data = str(self.request.body, encoding="utf-8")
 
             image_path = json.loads(data)["path"]
-            json_response = runtime.BACKEND.runSingleSession(image_path)
+            json_response = runtime.BACKEND.inferData(image_path)
 
             self.finish({"result": json_response})
         except KeyError as e:
@@ -64,14 +64,8 @@ class SwitchModelHandler(V1BaseHandler):
             data = str(self.request.body, encoding="utf-8")
             data = json.loads(data)
             
-            ret = runtime.BACKEND.switchModel(data)
-
-            if ret:
-                logging.debug("SwitchModelHandler::Post::SUCC")
-                self.finish({"status": "succ"})
-            else:
-                logging.debug("SwitchModelHandler::Post::FAIL")
-                self.finish({"status": "fail"})
+            runtime.BACKEND.loadModel(data)
+            self.finish({"status": "succ"})
 
         except KeyError as e:
             logging.exception(e)
