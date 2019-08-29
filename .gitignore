@@ -37,3 +37,4 @@ release-pack/
 srcs.txt
 *.so
 *.c
+*.swp

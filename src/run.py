@@ -29,18 +29,24 @@ class TornadoApplication(tornado.web.Application):
 
 
 def newBackendWithCollection(collection):
-    backend = utils.getKeyFromDicts('backend', env_key='JXSRV_BACKEND', validator=ab.validBackend)
+    backend = utils.getKey('backend', dicts=settings,
+                          env_key='JXSRV_BACKEND', v=ab.BackendValidator)
 
     if backend == ab.Type.TfPy:
         from serving.backend import tensorflow_python as tfpy
         return tfpy.TfPyBackend(collection, {
-            'preheat': utils.getKeyFromDicts('be.tfpy.preheat')
+            'preheat': utils.getKey('be.tfpy.preheat', dicts=settings)
         })
     if backend == ab.Type.TfSrv:
         from serving.backend import tensorflow_serving as tfsrv
         return tfsrv.TfSrvBackend(collection, {
-            'host': utils.getKeyFromDicts('be.tfsrv.host'),
-            'port': utils.getKeyFromDicts('be.tfsrv.rest_port'),
+            'host': utils.getKey('be.tfsrv.host', dicts=settings),
+            'port': utils.getKey('be.tfsrv.rest_port', dicts=settings),
+        })
+    if backend == ab.Type.Torch:
+        from serving.backend import torch_python as trpy
+        return trpy.TorchPyBackend(collection, {
+            'preheat': utils.getKey('be.trpy.preheat', dicts=settings)
         })
 
 def main():
@@ -59,7 +65,7 @@ def main():
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
     runtime.BACKEND = newBackendWithCollection(
-            utils.getKeyFromDicts('collection_path', env_key='JXSRV_COLLECTION_PATH'))
+            utils.getKey('collection_path', dicts=settings, env_key='JXSRV_COLLECTION_PATH'))
     assert(runtime.BACKEND != None)
     logging.debug("Loaded backend: {}".format(runtime.BACKEND))
 
