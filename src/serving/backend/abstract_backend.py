@@ -54,9 +54,9 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         self.configurations = configurations
 
     @utils.threads
-    def loadModel(self, switch_data):
+    def loadModel(self, switch_configs):
         try:
-            declared_model_name = utils.getKey('model', dicts=switch_data)
+            declared_model_name = utils.getKey('model', dicts=switch_configs)
             if (declared_model_name == self.current_model_name
               and self.switch_status == Status.Loaded):
                 return None
@@ -72,14 +72,11 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             if not os.path.isdir(declared_model_path):
                 raise RuntimeError("model does not exist: {}".format(declared_model_path))
             self.current_model_path = declared_model_path
-            # loading classes info
-            with open(os.path.join(self.current_model_path, 'class.txt')) as class_file:
-                self.classes = eval(class_file.read().encode('utf-8'))
             # loading model object
-            loaded_param = self._loadModel(switch_data)
+            loaded_param = self._loadModel(switch_configs)
             assert(self.model_object != None)
             if not loaded_param:
-                self._loadParameter(switch_data)
+                self._loadParameter(switch_configs)
             # preheat
             preheat = True
             logging.warning("force to preheat")
@@ -104,14 +101,16 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             'message': "",
         }
         try:
+            if (self.switch_status != Status.Loaded
+              and self.switch_status != Status.Preheating):
+                raise RuntimeError("model status is unhealthy")
             pre_p = self._preDataProcessing(infer_data)
             predict = self._inferData(pre_p)
             post_p = self._postDataProcessing(pre_p, predict, self.classes)
             inference['result'] = post_p
             inference['status'] = "success"
-            return result
+            return inference
         except Exception as e:
-            logging.error(e)
             logging.exception(e)
             inference['status'] = "failed"
             inference['message'] = "infer error: {}".format(e)
@@ -126,13 +125,12 @@ class AbstractBackend(metaclass=abc.ABCMeta):
 
     # this function is expected a bool return value
     @abc.abstractmethod
-    def _loadModel(self, load_data):
+    def _loadModel(self, load_configs):
         logging.critical("AbstractBackend::_loadModel called")
         exit(-1)
-        #return False
 
     @abc.abstractmethod
-    def _loadParameter(self, load_data):
+    def _loadParameter(self, load_configs):
         logging.critical("AbstractBackend::_loadParameter called")
         exit(-1)
 
