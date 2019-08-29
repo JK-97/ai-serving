@@ -14,14 +14,18 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'backend': "tensorflow",
-    'collection_path': "/home/tx1-node1/ai-demo/jxserving/src/model",
+    'backend': "pytorch",
+    'collection_path': "",
+    'security': "0",
 
     'be.tfsrv.host': "127.0.0.1",
     'be.tfsrv.adapter': "restful",
     'be.tfsrv.grpc_port': "8500",
     'be.tfsrv.rest_port': "8501",
 
-    'be.tfpy.preheat': "/home/tx1-node1/ai-demo/jxserving/src/preheat/preheat.jpeg",
+    'be.tfpy.preheat': "",
+
+    'be.trpy.preheat': "",
+    'be.trpy.mixed_mode': "1",
 }
 

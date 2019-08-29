@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import logging
+import threading
 from enum import Enum, unique # auto is available after python 3.7
 from tornado.options import options
 
@@ -33,6 +34,12 @@ def profiler_timer(prompt):
     return decorator
 
 
+def threads(func):
+    def wrapper(*args, **kwargs):
+        return threading.Thread(target=func, args=args, kwargs=kwargs).start()
+    return wrapper
+
+
 def getKey(key, dicts, env_key='', v=None, level=Access.Essential):
     value = None
 
@@ -46,7 +53,7 @@ def getKey(key, dicts, env_key='', v=None, level=Access.Essential):
     if value == None:
         if level == Access.Essential:
             message = "Failed to get <{}> from dicts or environ".format(key)
-            logging.critical(message)
+            logging.debug(message)
             raise RuntimeError(message)
         if level == Access.Optional:
             logging.debug("Return None for <{}>".format(key))
