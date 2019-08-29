@@ -67,7 +67,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         try:
            pre_p = self._preDataProcessing(infer_data)
            predict = self._inference(pre_p)
-           post_p = self.postDataProcessing(pre_p, predict)
+           post_p = self.postDataProcessing(pre_p, predict, self.classes)
            result['result'] = post_p
            result['status'] = "success"
            return result
@@ -102,6 +102,9 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             if not os.path.isdir(declared_model_path):
                 raise RuntimeError("model does not exist: {}".format(declared_model_path))
             self.current_model_path = declared_model_path
+            # loading classes info
+            with open(os.path.join(self.current_model_path, 'class.txt')) as class_file:
+                self.classes = eval(class_file.read().encode('utf-8'))
             # loading model object
             loaded_param = self._loadModel(switch_data)
             assert(self.model_object != None)
@@ -155,18 +158,14 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             raise e
 
     @utils.profiler_timer("AbstractBackend::postDataProcessing")
-    def _postDataProcessing(self, original_image, prediction_dict, classes):
+    def _postDataProcessing(self, pre_p, predict, classes):
         try:
             if self.postdp:
-                return self.postdp.post_dataprocess(original_image,
-                                                   prediction_dict,
-                                                   classes)
+                return self.postdp.post_dataprocess(pre_p, predict, classes)
             else:
                sys.path.append(self.current_model_path)
                self.postdp = importlib.import_module('post_dataprocess')
-               return self.postdp.post_dataprocess(original_image,
-                                                  prediction_dict,
-                                                  classes)
+               return self.postdp.post_dataprocess(pre_p, predict, classes)
         except Exception as e:
             logging.critical(e)
             logging.exception(e)
