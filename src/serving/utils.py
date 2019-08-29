@@ -10,11 +10,10 @@ import time
 import logging
 from enum import Enum, unique # auto is available after python 3.7
 from tornado.options import options
-from settings import settings
 
 
 @unique
-class AccessLevel(Enum):
+class Access(Enum):
     Essential = 'essential'
     Optional  = 'optional'
 
@@ -34,7 +33,7 @@ def profiler_timer(prompt):
     return decorator
 
 
-def getKeyFromDicts(key, dicts=settings, env_key='', validator=None, level=AccessLevel.Essential):
+def getKey(key, dicts, env_key='', v=None, level=Access.Essential):
     value = None
 
     if (key in dicts) and (dicts[key] != ''):
@@ -45,17 +44,17 @@ def getKeyFromDicts(key, dicts=settings, env_key='', validator=None, level=Acces
         logging.debug("Overwrite <{}> from environment: {}".format(key, value))
 
     if value == None:
-        if level == AccessLevel.Essential:
+        if level == Access.Essential:
             message = "Failed to get <{}> from dicts or environ".format(key)
             logging.critical(message)
             raise RuntimeError(message)
-        if level == AccessLevel.Optional:
+        if level == Access.Optional:
             logging.debug("Return None for <{}>".format(key))
 
-    if validator:
-        ret, err = validator(value)
+    if v:
+        ret, err = v(value)
         if ret != None: 
-            logging.debug("Pass <{}> on {}: {}".format(key, validator, ret))
+            logging.debug("Pass <{}> on {}: {}".format(key, v, ret))
             value = ret
         else:
             raise RuntimeError("Validation <{}> failed: {}".format(key, err))
