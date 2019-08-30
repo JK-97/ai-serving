@@ -140,14 +140,14 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         exit(-1)
    
     @utils.profiler_timer("AbstractBackend::preDataProcessing")
-    def _preDataProcessing(self, path):
+    def _preDataProcessing(self, infer_data):
         try:
             if self.predp:
-                return self.predp.pre_dataprocess(path)
+                return self.predp.pre_dataprocess(infer_data)
             else:
                sys.path.append(self.current_model_path)
                self.predp = importlib.import_module('pre_dataprocess')
-               return self.predp.pre_dataprocess(path)
+               return self.predp.pre_dataprocess(infer_data)
         except Exception as e:
             logging.exception(e)
             raise e
