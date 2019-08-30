@@ -74,7 +74,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             self.current_model_path = declared_model_path
             # loading model object
             loaded_param = self._loadModel(switch_configs)
-            assert(self.model_object != None)
+            assert self.model_object is not None
             if not loaded_param:
                 self._loadParameter(switch_configs)
             # preheat

@@ -54,6 +54,7 @@ class SwitchModelHandler(V1BaseHandler):
         POST:
           "model"   : string, specify the model that want to switch or load
           "mode"    : string <"frozen", "unfrozen">, specify the model is a frozen model or unfrozen model
+          "device"  : string, specify which device to run the session
           "preheat" : bool, specify whether to preheat the session
 
         Response:
@@ -62,15 +63,11 @@ class SwitchModelHandler(V1BaseHandler):
 
         try:
             data = str(self.request.body, encoding="utf-8")
-            data = json.loads(data)
-            
-            runtime.BACKEND.loadModel(data)
+            runtime.BACKEND.loadModel(json.loads(data))
             self.finish({"status": "succ"})
-
         except KeyError as e:
             logging.exception(e)
             self.send_error_response(status_code=400, message="missing key {}".format(e))
         except UnboundLocalError as e:
             logging.info("UnboundLocalError: request too fast")
-
 

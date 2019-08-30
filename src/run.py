@@ -41,6 +41,7 @@ def newBackendWithCollection(collection):
         return tfsrv.TfSrvBackend(collection, {
             'host': utils.getKey('be.tfsrv.host', dicts=settings),
             'port': utils.getKey('be.tfsrv.rest_port', dicts=settings),
+            'preheat': utils.getKey('be.tfsrv.preheat', dicts=settings),
         })
     if backend == ab.Type.Torch:
         from serving.backend import torch_python as trpy

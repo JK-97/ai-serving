@@ -14,14 +14,15 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'backend': "tensorflow",
-    'collection_path': "/home/jiangxing/ar_example_model",
+    'backend': "tensorflow-serving",
+    'collection_path': "/home/jiangxing//Desktop/TF/TF_serving1/",
     'security': "0",
 
     'be.tfsrv.host': "127.0.0.1",
     'be.tfsrv.adapter': "restful",
     'be.tfsrv.grpc_port': "8500",
     'be.tfsrv.rest_port': "8501",
+    'be.tfsrv.preheat': "/home/jiangxing/ar_example_model/preheat.jpeg",
 
     'be.tfpy.preheat': "/home/jiangxing/ar_example_model/preheat.jpeg",
 
