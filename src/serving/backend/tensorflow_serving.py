@@ -43,6 +43,7 @@ class TfSrvBackend(ab.AbstractBackend):
 
         with open(os.path.join(self.current_model_path, 'class.txt')) as class_file:
             self.classes = eval(class_file.read().encode('utf-8'))
+        self.model_object = "tensorflow-serving"
         return True
 
     @utils.profiler_timer("TfSrvBackend::_loadParameter")
