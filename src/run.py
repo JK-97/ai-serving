@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Basic run script"""
-
 import os
 # force protobuf to use cpp-implementation
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'cpp'
@@ -48,6 +46,12 @@ def newBackendWithCollection(collection):
         return trpy.TorchPyBackend(collection, {
             'preheat': utils.getKey('be.trpy.preheat', dicts=settings),
             'mixed_mode': utils.getKey('be.trpy.mixed_mode', dicts=settings),
+        })
+    if backend == ab.Type.RknnPy:
+        from serving.backend import rknn_python as rknnpy
+        return rknnpy.RKNNPyBackend(collection, {
+            'preheat': utils.getKey('be.rknnpy.preheat', dicts=settings),
+            'target': utils.getKey('be.rknnpy.target', dicts=settings),
         })
 
 def main():

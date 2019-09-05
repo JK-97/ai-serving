@@ -14,8 +14,8 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'backend': "tensorflow-serving",
-    'collection_path': "/home/jiangxing//Desktop/TF/TF_serving1/",
+    'backend': "rknn",
+    'collection_path': "/home/toybrick/ar_example_model",
     'security': "0",
 
     'be.tfsrv.host': "127.0.0.1",
@@ -28,6 +28,9 @@ settings = {
 
     'be.trpy.preheat': "/home/jiangxing/ar_example_model/ar_pose/data/preview.jpg",
     'be.trpy.mixed_mode': "1",
+
+    'be.rknnpy.preheat': "/home/toybrick/jxserving/src/test/daoxian30.jpg",
+    'be.rknnpy.target': "rk3399pro",
 }
 
     #'be.tfpy.preheat': "/home/jiangxing/ar_example_model/ar_pose/data/preview.jpg",
