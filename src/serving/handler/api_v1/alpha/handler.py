@@ -21,8 +21,7 @@ class DetectHandler(V1BaseHandler):
         try:
             data = str(self.request.body, encoding="utf-8")
 
-            image_path = json.loads(data)["path"]
-            json_response = runtime.BACKEND.inferData(image_path)
+            json_response = runtime.BACKEND.inferData(json.loads(data))
 
             self.finish(json_response)
         except KeyError as e:

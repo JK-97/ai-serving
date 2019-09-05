@@ -19,6 +19,7 @@ class Type(Enum):
     TfPy    = 'tensorflow'
     TfSrv   = 'tensorflow-serving'
     Torch   = 'pytorch'
+    RknnPy  = 'rknn'
 
 
 @unique
@@ -73,9 +74,9 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                 raise RuntimeError("model does not exist: {}".format(declared_model_path))
             self.current_model_path = declared_model_path
             # loading model object
-            loaded_param = self._loadModel(switch_configs)
+            is_loaded_param = self._loadModel(switch_configs)
             assert self.model_object is not None
-            if not loaded_param:
+            if not is_loaded_param:
                 self._loadParameter(switch_configs)
             # preheat
             preheat = True
@@ -83,7 +84,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             if preheat == True:
                 self.switch_status = Status.Preheating
                 filepath = utils.getKey('preheat', dicts=self.configurations)
-                if self.inferData(filepath)['status'] == "failed":
+                if self.inferData({'path':filepath})['status'] == "failed":
                     logging.warning("preheat failed")
             # set status
             self.switch_status = Status.Loaded
