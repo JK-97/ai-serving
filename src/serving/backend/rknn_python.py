@@ -33,8 +33,11 @@ class RKNNPyBackend(ab.AbstractBackend):
         pass
 
     @utils.profiler_timer("RKNNPyBackend::_inferData")
-    def _inferData(self, pre_p):
-        return self.model_object.inference(
-                inputs  = utils.getKey('inputs', dicts=pre_p),
-                data_type = utils.getKey('data_type', dicts=pre_p))
+    def _inferData(self, pack):
+        data_type = pack.get('data_type')
+        if data_type is None:
+            return self.model_object.inference(inputs = pack.get('inputs'))
+        else:
+            return self.model_object.inference(inputs = pack.get('inputs'),
+                                              data_type = data_type)
 

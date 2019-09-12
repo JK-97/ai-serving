@@ -9,6 +9,7 @@ import sys
 import time
 import logging
 import threading
+from multiprocessing import Process
 from enum import Enum, unique # auto is available after python 3.7
 from tornado.options import options
 
@@ -26,7 +27,8 @@ def profiler_timer(prompt):
                 ts = time.time()
                 ret = func(*args, **kwargs)
                 te = time.time()
-                logging.debug("{} elapse {} secs".format(prompt, te-ts))
+                #logging.debug("{} elapse {} secs".format(prompt, te-ts))
+                print("{} elapse {} secs".format(prompt, te-ts))
                 return ret
             else:
                 return func(*args, **kwargs)
@@ -34,9 +36,9 @@ def profiler_timer(prompt):
     return decorator
 
 
-def threads(func):
+def process(func):
     def wrapper(*args, **kwargs):
-        return threading.Thread(target=func, args=args, kwargs=kwargs).start()
+        return Process(target=func, args=args, kwargs=kwargs).start()
     return wrapper
 
 
