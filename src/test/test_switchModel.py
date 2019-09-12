@@ -12,8 +12,6 @@ def api_get():
     """
     result = requests.get("http://localhost:8080/api/v1alpha/switch")
     print(result.json())
-    if result.json()['status'] == "loaded":
-        return True
     return False
 
 

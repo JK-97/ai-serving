@@ -7,12 +7,14 @@
 import os
 import abc
 import sys
+import redis
 import logging
 import importlib
 import rapidjson as json
 from enum import Enum, unique
+from multiprocessing import Value
 from serving import utils
-
+from serving.core import queue as q
 
 @unique
 class Type(Enum):
@@ -24,12 +26,12 @@ class Type(Enum):
 
 @unique
 class Status(Enum):
-    Unloaded   = 'unloaded'
-    Cleaning   = 'cleaning'
-    Loading    = 'loading'
-    Preheating = 'preheating'
-    Loaded     = 'loaded'
-    Failed     = 'failed'
+    Unloaded   = 0
+    Failed     = 1
+    Cleaning   = 2
+    Loading    = 3
+    Preheating = 4
+    Running    = 5
 
 
 def BackendValidator(value):
@@ -44,9 +46,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         self.model_object = None
         self.current_model_name = ""
         self.current_model_path = ""
-        self.switch_status = Status.Unloaded
-        self.switch_error = None
 
+        self.status = {}
         self.classes = []
         self.predp = None
         self.postdp = None
@@ -54,74 +55,159 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         self.collection_path = collection
         self.configurations = configurations
 
-    @utils.threads
-    def loadModel(self, switch_configs):
+        self.multiple_mode = True
+        self.infer_threads_num = 2
+
+        rHost = utils.getKey('redis.host', self.configurations)
+        rPort = utils.getKey('redis.port', self.configurations)
+        self.rPipe = redis.Redis(host=rHost, port=rPort)
+
+    def initBackend(self, switch_configs):
         try:
-            declared_model_name = utils.getKey('model', dicts=switch_configs)
-            if (declared_model_name == self.current_model_name
-              and self.switch_status == Status.Loaded):
-                return None
+            decl_model_name = utils.getKey('model', dicts=switch_configs)
+            # if switch to same model, quick return
             # cleaning
-            if self.model_object != None:
-                self.switch_status = Status.Cleaning
-                self.model_object = None
             # loading
-            self.switch_status = Status.Loading
-            self.current_model_name = declared_model_name
-            self.switch_error = None
-            declared_model_path = os.path.join(self.collection_path, declared_model_name)
-            if not os.path.isdir(declared_model_path):
-                raise RuntimeError("model does not exist: {}".format(declared_model_path))
-            self.current_model_path = declared_model_path
+            self.current_model_name = decl_model_name
+
+            decl_model_path = os.path.join(self.collection_path, self.current_model_name)
+            if not os.path.isdir(decl_model_path):
+                raise RuntimeError("model does not exist: {}".format(decl_model_path))
+            self.current_model_path = decl_model_path
+
+            if self.predp is None:
+                sys.path.append(self.current_model_path)
+                self.predp = importlib.import_module('pre_dataprocess')
+
+            if self.postdp is None:
+                sys.path.append(self.current_model_path)
+                self.postdp = importlib.import_module('post_dataprocess')
+
+            # start process
+            self.preprocessor(q.input_queue, q.predp_queue, q.exit_flag)
+            for i in range(0, self.infer_threads_num):
+                self.status[i] = Value('B', Status.Unloaded.value)
+                self.predictor(switch_configs, q.predp_queue, q.predict_queue, self.status[i], q.exit_flag)
+            self.postprocessor(q.predict_queue, q.output_queue, q.exit_flag)
+            self.exporter(q.output_queue, q.exit_flag)
+        except Exception as e:
+            logging.exception(e)
+
+    def importer(self, infer_data):
+        q.input_queue.put(infer_data)
+
+    @utils.process
+    def preprocessor(self, in_queue, out_queue, exit_flag):
+        try:
+            while True:
+                if exit_flag.value == 10:
+                     break
+
+                package = None
+                if in_queue.empty():
+                    continue
+                else:
+                    package = in_queue.get()
+
+                ret = {'id': package['uuid'],
+                      'pre': self.predp.pre_dataprocess(package)}
+
+                if out_queue.full():
+                    continue
+                else:
+                    out_queue.put(ret)
+        except Exception as e:
+            logging.exception(e)
+
+    @utils.process
+    def predictor(self, switch_configs, in_queue, out_queue, load_status, exit_flag):
+        try:
             # loading model object
+            load_status.value = Status.Loading.value
             is_loaded_param = self._loadModel(switch_configs)
+            _ = self._loadModel(switch_configs)
             assert self.model_object is not None
             if not is_loaded_param:
                 self._loadParameter(switch_configs)
             # preheat
             preheat = True
-            logging.warning("force to preheat")
             if preheat == True:
-                self.switch_status = Status.Preheating
-                filepath = utils.getKey('preheat', dicts=self.configurations)
-                if self.inferData({'path':filepath})['status'] == "failed":
-                    logging.warning("preheat failed")
-            # set status
-            self.switch_status = Status.Loaded
+                load_status.value = Status.Preheating.value
+                filepath = self.configurations.get('preheat')
+                self.importer({'uuid': "preheat", 'path': filepath})
+            load_status.value = Status.Running.value
+            self.predictor_core(in_queue, out_queue, exit_flag)
         except Exception as e:
-            self.switch_status = Status.Cleaning
+            logging.exception(e)
+            load_status.value = Status.Cleaning.value
             self.model_object = None
-            logging.exception(e)
-            self.switch_status = Status.Failed
-            self.switch_error = e
+            load_status.value = Status.Failed.value
 
-    def inferData(self, infer_data):
-        inference = {
-            'status': "failed",
-            'result': None,
-            'message': "",
-        }
+    def predictor_core(self, in_queue, out_queue, exit_flag):
         try:
-            if (self.switch_status != Status.Loaded
-              and self.switch_status != Status.Preheating):
-                raise RuntimeError("model status is unhealthy")
-            pre_p = self._preDataProcessing(infer_data)
-            predict = self._inferData(pre_p)
-            post_p = self._postDataProcessing(pre_p, predict, self.classes)
-            inference['result'] = post_p
-            inference['status'] = "success"
-            return inference
+            while True:
+                if exit_flag.value == 10:
+                     break
+
+                package = None
+                if in_queue.empty():
+                    continue
+                else:
+                    package = in_queue.get()
+
+                package['pred'] = self._inferData(package['pre'])
+                package['class'] = self.classes
+                ret = package
+                if package.get('id') == "preheat":
+                    logging.debug("skip preheat image")
+                    continue
+
+                if out_queue.full():
+                    continue
+                else:
+                    out_queue.put(ret)
         except Exception as e:
             logging.exception(e)
-            inference['status'] = "failed"
-            inference['message'] = "infer error: {}".format(e)
-            return inference
+
+    @utils.process
+    def postprocessor(self, in_queue, out_queue, exit_flag):
+        try:
+            while True:
+                if exit_flag.value == 10:
+                     break
+
+                package = None
+                if in_queue.empty():
+                    continue
+                else:
+                    package = in_queue.get()
+
+                ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package)}
+
+                if out_queue.full():
+                    continue
+                else:
+                    out_queue.put(ret)
+        except Exception as e:
+            logging.exception(e)
+
+    @utils.process
+    def exporter(self, o_queue, exit_flag):
+        try:
+            while True:
+                package = o_queue.get()
+                self.rPipe.set(package.get('id'), self._dumpsData(package))
+        except Exception as e:
+            logging.exception(e)
 
     def reportStatus(self):
+        status_vector = {}
+        for i in range(0, self.infer_threads_num):
+            status_vector[i] = self.status[i].value
         return {
             'model'  : self.current_model_name,
-            'status' : self.switch_status.value,
-            'error'  : "switch error: {}".format(self.switch_error),
+            'status' : status_vector,
+            #'error'  : "switch error: {}".format(self.switch_error),
         }
 
     # this function is expected a bool return value
@@ -139,33 +225,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     def _inferData(self, infer_data):
         logging.critical("AbstractBackend::_inference called")
         exit(-1)
-   
-    @utils.profiler_timer("AbstractBackend::preDataProcessing")
-    def _preDataProcessing(self, infer_data):
-        try:
-            if self.predp:
-                return self.predp.pre_dataprocess(infer_data)
-            else:
-               sys.path.append(self.current_model_path)
-               self.predp = importlib.import_module('pre_dataprocess')
-               return self.predp.pre_dataprocess(infer_data)
-        except Exception as e:
-            logging.exception(e)
-            raise e
 
-    @utils.profiler_timer("AbstractBackend::postDataProcessing")
-    def _postDataProcessing(self, pre_p, predict, classes):
-        try:
-            if self.postdp:
-                return self.postdp.post_dataprocess(pre_p, predict, classes)
-            else:
-               sys.path.append(self.current_model_path)
-               self.postdp = importlib.import_module('post_dataprocess')
-               return self.postdp.post_dataprocess(pre_p, predict, classes)
-        except Exception as e:
-            logging.exception(e)
-            raise e
- 
     @utils.profiler_timer("AbstractBackend::_dumpsData")
     def _dumpsData(self, data):
         return json.dumps(data)

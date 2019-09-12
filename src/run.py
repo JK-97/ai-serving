@@ -3,20 +3,18 @@
 
 import os
 # force protobuf to use cpp-implementation
-os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'cpp'
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 import logging
 import tornado.web
 import tornado.ioloop
-import tornado.autoreload
 from tornado.options import options
 from settings import settings
-from serving import utils
 from serving.core import runtime
 from serving.urls import url_patterns
-from serving.backend import abstract_backend as ab
 
-enable_better_exceptions = os.getenv("BETTER_EXCEPTIONS")
+from tornado.concurrent import run_on_executor
+from concurrent.futures import ThreadPoolExecutor
 
 
 class TornadoApplication(tornado.web.Application):
@@ -25,40 +23,8 @@ class TornadoApplication(tornado.web.Application):
         tornado.web.Application.__init__(self, url_patterns, **settings)
 
 
-def newBackendWithCollection(collection):
-    backend = utils.getKey('backend', dicts=settings,
-                          env_key='JXSRV_BACKEND', v=ab.BackendValidator)
-
-    if backend == ab.Type.TfPy:
-        from serving.backend import tensorflow_python as tfpy
-        return tfpy.TfPyBackend(collection, {
-            'preheat': utils.getKey('be.tfpy.preheat', dicts=settings)
-        })
-    if backend == ab.Type.TfSrv:
-        from serving.backend import tensorflow_serving as tfsrv
-        return tfsrv.TfSrvBackend(collection, {
-            'host': utils.getKey('be.tfsrv.host', dicts=settings),
-            'port': utils.getKey('be.tfsrv.rest_port', dicts=settings),
-            'preheat': utils.getKey('be.tfsrv.preheat', dicts=settings),
-        })
-    if backend == ab.Type.Torch:
-        from serving.backend import torch_python as trpy
-        return trpy.TorchPyBackend(collection, {
-            'preheat': utils.getKey('be.trpy.preheat', dicts=settings),
-            'mixed_mode': utils.getKey('be.trpy.mixed_mode', dicts=settings),
-        })
-    if backend == ab.Type.RknnPy:
-        from serving.backend import rknn_python as rknnpy
-        return rknnpy.RKNNPyBackend(collection, {
-            'preheat': utils.getKey('be.rknnpy.preheat', dicts=settings),
-            'target': utils.getKey('be.rknnpy.target', dicts=settings),
-        })
-
 def main():
     tornado.options.parse_command_line()
-    if enable_better_exceptions == "1":
-        import better_exceptions
-        better_exceptions.hook()
 
     if options.debug:
         logging.getLogger('').setLevel(logging.DEBUG)
@@ -69,11 +35,7 @@ def main():
         from google.protobuf.internal import api_implementation
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
-    runtime.BACKEND = newBackendWithCollection(
-            utils.getKey('collection_path', dicts=settings,
-                        env_key='JXSRV_COLLECTION_PATH'))
-    assert(runtime.BACKEND != None)
-    logging.debug("Loaded backend: {}".format(runtime.BACKEND))
+    runtime.createBackends(1)
 
     app = TornadoApplication()
     app.listen(options.port)

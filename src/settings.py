@@ -16,6 +16,8 @@ define("port", default=8080, help="run on the given port", type=int)
 settings = {
     'backend': "rknn",
     'collection_path': "/home/toybrick/ar_example_model",
+    'redis.host': "localhost",
+    'redis.port': "6379",
     'security': "0",
 
     'be.tfsrv.host': "127.0.0.1",
