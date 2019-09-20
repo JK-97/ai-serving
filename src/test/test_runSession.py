@@ -17,7 +17,7 @@ def api_post(uid):
     """
     data = {
         "uuid": uid,
-        "path": "/home/toybrick/jxserving/src/test/daoxian30.jpg"}
+        "path": "/home/ubuntu/ar_example_model/preheat.jpeg"}
     #data = {"path": "/home/jiangxing/ar_example_model/ar_pose/data/preview.jpg"}
     #result = requests.post("http://localhost:8080/api/v1alpha/detect", data=json.dumps(data))
     p = Process(target=requests.post, args=("http://localhost:8080/api/v1alpha/detect", json.dumps(data)))
@@ -68,5 +68,5 @@ while True:
         if v != None:
             count = count+1
             print(i, v)
-    if count == 40:
+    if count == PCS:
         break

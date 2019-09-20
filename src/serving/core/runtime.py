@@ -39,7 +39,9 @@ def newBackendWithCollection(collection):
     if backend_type == ab.Type.TfPy:
         from serving.backend import tensorflow_python as tfpy
         return tfpy.TfPyBackend(collection, {
-            'preheat': utils.getKey('be.tfpy.preheat', dicts=settings)
+            'preheat': utils.getKey('be.tfpy.preheat', dicts=settings),
+            'redis.host': utils.getKey('redis.host', dicts=settings),
+            'redis.port': utils.getKey('redis.port', dicts=settings),
         })
     if backend_type == ab.Type.TfSrv:
         from serving.backend import tensorflow_serving as tfsrv
@@ -47,12 +49,16 @@ def newBackendWithCollection(collection):
             'host': utils.getKey('be.tfsrv.host', dicts=settings),
             'port': utils.getKey('be.tfsrv.rest_port', dicts=settings),
             'preheat': utils.getKey('be.tfsrv.preheat', dicts=settings),
+            'redis.host': utils.getKey('redis.host', dicts=settings),
+            'redis.port': utils.getKey('redis.port', dicts=settings),
         })
     if backend_type == ab.Type.Torch:
         from serving.backend import torch_python as trpy
         return trpy.TorchPyBackend(collection, {
             'preheat': utils.getKey('be.trpy.preheat', dicts=settings),
             'mixed_mode': utils.getKey('be.trpy.mixed_mode', dicts=settings),
+            'redis.host': utils.getKey('redis.host', dicts=settings),
+            'redis.port': utils.getKey('redis.port', dicts=settings),
         })
     if backend_type == ab.Type.RknnPy:
         from serving.backend import rknn_python as rknnpy
