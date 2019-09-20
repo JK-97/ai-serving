@@ -56,7 +56,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         self.configurations = configurations
 
         self.multiple_mode = True
-        self.infer_threads_num = 2
+        self.infer_threads_num = 1
 
         rHost = utils.getKey('redis.host', self.configurations)
         rPort = utils.getKey('redis.port', self.configurations)
@@ -104,18 +104,24 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                      break
 
                 package = None
+                """
                 if in_queue.empty():
                     continue
                 else:
                     package = in_queue.get()
+                """
+                package = in_queue.get()
 
                 ret = {'id': package['uuid'],
                       'pre': self.predp.pre_dataprocess(package)}
 
+                """
                 if out_queue.full():
                     continue
                 else:
                     out_queue.put(ret)
+                """
+                out_queue.put(ret)
         except Exception as e:
             logging.exception(e)
 
@@ -150,10 +156,13 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                      break
 
                 package = None
+                """
                 if in_queue.empty():
                     continue
                 else:
                     package = in_queue.get()
+                """
+                package = in_queue.get()
 
                 package['pred'] = self._inferData(package['pre'])
                 package['class'] = self.classes
@@ -162,10 +171,13 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                     logging.debug("skip preheat image")
                     continue
 
+                """
                 if out_queue.full():
                     continue
                 else:
                     out_queue.put(ret)
+                """
+                out_queue.put(ret)
         except Exception as e:
             logging.exception(e)
 
@@ -177,17 +189,23 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                      break
 
                 package = None
+                """
                 if in_queue.empty():
                     continue
                 else:
                     package = in_queue.get()
+                """
+                package = in_queue.get()
 
                 ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package)}
 
+                """
                 if out_queue.full():
                     continue
                 else:
                     out_queue.put(ret)
+                """
+                out_queue.put(ret)
         except Exception as e:
             logging.exception(e)
 
