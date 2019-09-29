@@ -26,12 +26,12 @@ settings = {
     'be.tfsrv.adapter': "restful",
     'be.tfsrv.grpc_port': "8500",
     'be.tfsrv.rest_port': "8501",
-    'be.tfsrv.preheat': "/home/jiangxing/ar_example_model/preheat.jpeg",
+    'be.tfsrv.preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
 
-    'be.trpy.preheat': "/home/jiangxing/ar_example_model/ar_pose/data/preview.jpg",
+    'be.trpy.preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
     'be.trpy.mixed_mode': "1",
 
-    'be.rknnpy.preheat': "/home/toybrick/jxserving/src/test/daoxian30.jpg",
+    'be.rknnpy.preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
     'be.rknnpy.target': "rk3399pro",
 }
 

@@ -8,8 +8,8 @@ import numpy as np
 import redis
 import uuid
 
-PCS = 40
-#PCS = 1
+#PCS = 40
+PCS = 1
 
 def api_post(uid):
     """
