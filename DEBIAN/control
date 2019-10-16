@@ -1,0 +1,6 @@
+Package: jx-jxserving
+Version: REPLACE_VERSION
+Maintainer: songdanyang <songdanyang@jiangxing.ai>
+Description: JXServing is designed to provide a unify Deep Learning (DL) detection API
+Homepage: http://gitlab.jiangxingai.com/system-dev/jxserving
+Architecture: REPLACE_ARCH
