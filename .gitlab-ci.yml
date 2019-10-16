@@ -10,7 +10,6 @@ build:
     - pip3 install cython
   script:
     - make clean
-    - make debian arch=amd64
     - make debian arch=arm64
   artifacts:
     paths:
