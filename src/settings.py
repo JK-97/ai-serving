@@ -14,13 +14,15 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'backend': "pytorch",
+    'backend': "tensorflow-lite",
     'collection_path': "/home/ubuntu/ar_example_model",
     'redis.host': "localhost",
     'redis.port': "6379",
     'security': "0",
 
     'be.tfpy.preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
+
+    'be.tflite.preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
 
     'be.tfsrv.host': "127.0.0.1",
     'be.tfsrv.adapter': "restful",
