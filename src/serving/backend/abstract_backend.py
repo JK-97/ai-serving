@@ -19,6 +19,7 @@ from serving.core import queue as q
 @unique
 class Type(Enum):
     TfPy    = 'tensorflow'
+    TfLite  = 'tensorflow-lite'
     TfSrv   = 'tensorflow-serving'
     Torch   = 'pytorch'
     RknnPy  = 'rknn'

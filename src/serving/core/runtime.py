@@ -68,4 +68,11 @@ def newBackendWithCollection(collection):
             'redis.host': utils.getKey('redis.host', dicts=settings),
             'redis.port': utils.getKey('redis.port', dicts=settings),
         })
+    if backend_type == ab.Type.TfLite:
+        from serving.backend import tensorflow_lite as tflite
+        return tflite.TfLiteBackend(collection, {
+            'preheat': utils.getKey('be.tflite.preheat', dicts=settings),
+            'redis.host': utils.getKey('redis.host', dicts=settings),
+            'redis.port': utils.getKey('redis.port', dicts=settings),
+        })
 
