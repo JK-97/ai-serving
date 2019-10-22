@@ -96,7 +96,6 @@ class MxNetBackend(ab.AbstractBackend):
 
     @utils.profiler_timer("MxNetBackend::detect_model1")
     def detect_model1(self, infer_data):
-        infer_data = infer_data['pre']
         output_list = []
         input_buff_list, scales, threshold, img = infer_data
         if len(input_buff_list) != len(scales):
@@ -107,21 +106,18 @@ class MxNetBackend(ab.AbstractBackend):
 
     @utils.profiler_timer("MxNetBackend::detect_model2")
     def detect_model2(self, infer_data):
-        infer_data = infer_data['pre']
         boxes, input_buff_list, img = infer_data
         output = self.model_object.predict(input_buff_list)
         return boxes, output, img
 
     @utils.profiler_timer("MxNetBackend::detect_model3")
     def detect_model3(self, infer_data):
-        infer_data = infer_data['pre']
         boxes, input_buff_list, img = infer_data
         output = self.model_object.predict(input_buff_list)
         return boxes, output, img
 
     @utils.profiler_timer("MxNetBackend::identify_model")
     def identify_model(self, infer_data):
-        infer_data = infer_data['pre']
         output_list = []
         data_iter, imgs, init_bboxes = infer_data
         for batch_faces in data_iter:
