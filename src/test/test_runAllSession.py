@@ -15,7 +15,7 @@ def api_post(uid, data, port):
 
 
 th = {}
-data_dic = {"path": "/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/model/model1/jx_all.jpg"}
+data_dic = {"path": "/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/mxNet/model1/jx_all.jpg"}
 
 r = redis.Redis(host="localhost", port=6379)
 

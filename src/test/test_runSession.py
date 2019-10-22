@@ -16,7 +16,7 @@ def api_post(uid):
     """
     data = {
         "uuid": uid,
-        "path": "/Users/zhouyou/Documents/jx.github.com/jxserving/src/model/model1/jx_all.jpg"
+        "path": "/Users/zhouyou/Documents/jx.github.com/jxserving/src/mxNet/model1/jx_all.jpg"
     }
     while True:
         p = Process(target=requests.post, args=("http://localhost:8080/api/v1alpha/detect", json.dumps(data)))

@@ -1,7 +1,10 @@
-import logging, sys
+import logging
+
 import rapidjson as json
-from serving.handler.base import BaseHandler, AsyncHandler
+
 from serving.core import runtime
+from serving.handler.base import BaseHandler, AsyncHandler
+
 
 class DetectHandler(AsyncHandler):
 
@@ -16,18 +19,12 @@ class DetectHandler(AsyncHandler):
         Response:
           "result"   : dict, model prediction result
         """
-
-        json_response = None
         try:
             data = str(self.request.body, encoding="utf-8")
-
-            #json_response = runtime.BACKEND.inferData(json.loads(data))
-            #self.finish(json_response)
-            # json_response = runtime.BACKEND.inferData(json.loads(data))
             self.finish(runtime.inputData(json.loads(data)))
         except KeyError as e:
             logging.exception(e)
-            self.finish({"err":400, "msg":"missing key {}".format(e)})
+            self.finish({"err": 400, "msg": "missing key {}".format(e)})
         except UnboundLocalError as e:
             logging.info("UnboundLocalError: request too fast")
 
@@ -38,14 +35,14 @@ class SwitchModelHandler(BaseHandler):
         """
         Response:
           "model"   : string, current serving model
-          "status"  : string <"cleaning", "loading", "preheating", "loaded", "failed">, indicate current status of model switching 
+          "status"  : string <"cleaning", "loading", "preheating", "loaded", "failed">, indicate current status of model switching
           "error"   : string, error message when failed to load a model
         """
         try:
             self.finish(runtime.reporter())
         except KeyError as e:
             logging.exception(e)
-            self.finish({"err":400, "msg":"missing key {}".format(e)})
+            self.finish({"err": 400, "msg": "missing key {}".format(e)})
         except UnboundLocalError as e:
             logging.info("UnboundLocalError: request too fast")
 
@@ -58,7 +55,7 @@ class SwitchModelHandler(BaseHandler):
           "preheat" : bool, specify whether to preheat the session
 
         Response:
-          "status"  : string <"succ", "fail">, indicate whether a model is found correctly and 
+          "status"  : string <"succ", "fail">, indicate whether a model is found correctly and
         """
 
         try:
@@ -70,4 +67,3 @@ class SwitchModelHandler(BaseHandler):
             self.send_error_response(status_code=400, message="missing key {}".format(e))
         except UnboundLocalError as e:
             logging.info("UnboundLocalError: request too fast")
-
