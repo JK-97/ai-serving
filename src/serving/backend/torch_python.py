@@ -26,7 +26,7 @@ def ModelTypeValidator(value):
     try:
         return ModelType(value), ""
     except ValueError as e:
-        return None, "unsupported model type"
+        return None, "unsupported mxNet type"
 
 
 class TorchPyBackend(ab.AbstractBackend):
@@ -40,12 +40,12 @@ class TorchPyBackend(ab.AbstractBackend):
         return True
 
     def _loadStructEmbedModel(self, load_configs):
-        logging.error('Currently not impl structure embedded model')
+        logging.error('Currently not impl structure embedded mxNet')
         return True
 
     def _loadStructSplitModel(self, load_configs):
         sys.path.append(self.current_model_path)
-        model_loader = importlib.import_module('model')
+        model_loader = importlib.import_module('mxNet')
         self.model_object = model_loader.build_structure()
         self.model_object.to(self._getDevice(load_configs))
         return False

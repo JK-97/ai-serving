@@ -70,11 +70,11 @@ class AbstractBackend(metaclass=abc.ABCMeta):
 
     def initBackend(self, switch_configs):
         try:
-            decl_model_name = utils.getKey('model', dicts=switch_configs)
+            decl_model_name = utils.getKey('mxNet', dicts=switch_configs)
             self.current_model_name = decl_model_name
             decl_model_path = os.path.join(self.collection_path, self.current_model_name)
             if not os.path.isdir(decl_model_path):
-                raise RuntimeError("model does not exist: {}".format(decl_model_path))
+                raise RuntimeError("mxNet does not exist: {}".format(decl_model_path))
             self.current_model_path = decl_model_path
 
             if self.predp is None:
@@ -128,7 +128,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     @utils.process
     def predictor(self, switch_configs, in_queue, out_queue, load_status, exit_flag):
         try:
-            # loading model object
+            # loading mxNet object
             load_status.value = Status.Loading.value
             is_loaded_param = self._loadModel(switch_configs)
             assert self.model_object is not None
@@ -220,7 +220,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         for i in range(0, self.infer_threads_num):
             status_vector[i] = self.status[i].value
         return {
-            'model': self.current_model_name,
+            'mxNet': self.current_model_name,
             'status': status_vector,
             # 'error'  : "switch error: {}".format(self.switch_error),
         }

@@ -11,10 +11,10 @@ class DetectHandler(AsyncHandler):
     def post(self, *args, **kwargs):
         """
         POST:
-          "path"     : string, specify which image is sending to tensorflow model
+          "path"     : string, specify which image is sending to tensorflow mxNet
 
         Response:
-          "result"   : dict, model prediction result
+          "result"   : dict, mxNet prediction result
         """
 
         json_response = None
@@ -37,9 +37,9 @@ class SwitchModelHandler(BaseHandler):
     def get(self, *args, **kwargs):
         """
         Response:
-          "model"   : string, current serving model
-          "status"  : string <"cleaning", "loading", "preheating", "loaded", "failed">, indicate current status of model switching 
-          "error"   : string, error message when failed to load a model
+          "mxNet"   : string, current serving mxNet
+          "status"  : string <"cleaning", "loading", "preheating", "loaded", "failed">, indicate current status of mxNet switching
+          "error"   : string, error message when failed to load a mxNet
         """
         try:
             self.finish(runtime.reporter())
@@ -52,13 +52,13 @@ class SwitchModelHandler(BaseHandler):
     def post(self, *args, **kwargs):
         """
         POST:
-          "model"   : string, specify the model that want to switch or load
-          "mode"    : string <"frozen", "unfrozen">, specify the model is a frozen model or unfrozen model
+          "mxNet"   : string, specify the mxNet that want to switch or load
+          "mode"    : string <"frozen", "unfrozen">, specify the mxNet is a frozen mxNet or unfrozen mxNet
           "device"  : string, specify which device to run the session
           "preheat" : bool, specify whether to preheat the session
 
         Response:
-          "status"  : string <"succ", "fail">, indicate whether a model is found correctly and 
+          "status"  : string <"succ", "fail">, indicate whether a mxNet is found correctly and
         """
 
         try:

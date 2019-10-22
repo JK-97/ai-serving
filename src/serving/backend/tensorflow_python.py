@@ -22,7 +22,7 @@ def ModelTypeValidator(value):
     try:
         return ModelType(value), ""
     except ValueError as e:
-        return None, "unsupported model type"
+        return None, "unsupported mxNet type"
 
 
 class TfPyBackend(ab.AbstractBackend):
@@ -54,7 +54,7 @@ class TfPyBackend(ab.AbstractBackend):
             self.input_tensor_vec = []
             for it in self.tensor_map['input']:
                 self.input_tensor_vec.append(self.model_object.graph.get_tensor_by_name(it))
-            print("tensorflow python load model")
+            print("tensorflow python load mxNet")
             return True
         except Exception as e:
             self.tensor_map = {}
