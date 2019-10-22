@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-# force protobuf to use cpp-implementation
-os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
-
 import logging
-import tornado.web
+import os
+
 import tornado.ioloop
+import tornado.web
 from tornado.options import options
-from settings import settings
+
 from serving.core import runtime
 from serving.urls import url_patterns
+from settings import settings
 
-from tornado.concurrent import run_on_executor
-from concurrent.futures import ThreadPoolExecutor
+# force protobuf to use cpp-implementation
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 
 class TornadoApplication(tornado.web.Application):

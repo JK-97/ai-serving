@@ -54,6 +54,7 @@ class TfPyBackend(ab.AbstractBackend):
             self.input_tensor_vec = []
             for it in self.tensor_map['input']:
                 self.input_tensor_vec.append(self.model_object.graph.get_tensor_by_name(it))
+            print("tensorflow python load model")
             return True
         except Exception as e:
             self.tensor_map = {}

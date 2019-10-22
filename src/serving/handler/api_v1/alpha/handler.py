@@ -23,7 +23,7 @@ class DetectHandler(AsyncHandler):
 
             #json_response = runtime.BACKEND.inferData(json.loads(data))
             #self.finish(json_response)
-            #json_response = runtime.BACKEND.inferData(json.loads(data))
+            # json_response = runtime.BACKEND.inferData(json.loads(data))
             self.finish(runtime.inputData(json.loads(data)))
         except KeyError as e:
             logging.exception(e)

@@ -4,35 +4,40 @@
   Contact: songdanyang@jiangxing.ai
 """
 
-import os
 import abc
-import sys
-import redis
-import logging
 import importlib
-import rapidjson as json
+import logging
+import os
+import sys
 from enum import Enum, unique
 from multiprocessing import Value
+
+import rapidjson as json
+import redis
+
+from settings import settings
 from serving import utils
 from serving.core import queue as q
 
+
 @unique
 class Type(Enum):
-    TfPy    = 'tensorflow'
-    TfLite  = 'tensorflow-lite'
-    TfSrv   = 'tensorflow-serving'
-    Torch   = 'pytorch'
-    RknnPy  = 'rknn'
+    TfPy = 'tensorflow'
+    TfLite = 'tensorflow-lite'
+    TfSrv = 'tensorflow-serving'
+    Torch = 'pytorch'
+    RknnPy = 'rknn'
+    MxNet = 'mxNet'
 
 
 @unique
 class Status(Enum):
-    Unloaded   = 0
-    Failed     = 1
-    Cleaning   = 2
-    Loading    = 3
+    Unloaded = 0
+    Failed = 1
+    Cleaning = 2
+    Loading = 3
     Preheating = 4
-    Running    = 5
+    Running = 5
 
 
 def BackendValidator(value):
@@ -43,7 +48,7 @@ def BackendValidator(value):
 
 
 class AbstractBackend(metaclass=abc.ABCMeta):
-    def __init__(self, collection, configurations = {}):
+    def __init__(self, collection, configurations={}):
         self.model_object = None
         self.current_model_name = ""
         self.current_model_path = ""
@@ -66,11 +71,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     def initBackend(self, switch_configs):
         try:
             decl_model_name = utils.getKey('model', dicts=switch_configs)
-            # if switch to same model, quick return
-            # cleaning
-            # loading
             self.current_model_name = decl_model_name
-
             decl_model_path = os.path.join(self.collection_path, self.current_model_name)
             if not os.path.isdir(decl_model_path):
                 raise RuntimeError("model does not exist: {}".format(decl_model_path))
@@ -102,9 +103,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         try:
             while True:
                 if exit_flag.value == 10:
-                     break
-
-                package = None
+                    break
                 """
                 if in_queue.empty():
                     continue
@@ -114,7 +113,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                 package = in_queue.get()
 
                 ret = {'id': package['uuid'],
-                      'pre': self.predp.pre_dataprocess(package)}
+                       'pre': self.predp.pre_dataprocess(package)}
 
                 """
                 if out_queue.full():
@@ -132,13 +131,13 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             # loading model object
             load_status.value = Status.Loading.value
             is_loaded_param = self._loadModel(switch_configs)
-            _ = self._loadModel(switch_configs)
             assert self.model_object is not None
             if not is_loaded_param:
                 self._loadParameter(switch_configs)
             # preheat
             preheat = True
-            if preheat == True:
+            backend_type = utils.getKey('backend', dicts=settings, env_key='JXSRV_BACKEND', v=BackendValidator)
+            if preheat and backend_type != Type.MxNet:
                 load_status.value = Status.Preheating.value
                 filepath = self.configurations.get('preheat')
                 self.importer({'uuid': "preheat", 'path': filepath})
@@ -154,9 +153,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         try:
             while True:
                 if exit_flag.value == 10:
-                     break
-
-                package = None
+                    break
                 """
                 if in_queue.empty():
                     continue
@@ -165,7 +162,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                 """
                 package = in_queue.get()
 
-                package['pred'] = self._inferData(package['pre'])
+                package['pred'] = self._inferData(package)
                 package['class'] = self.classes
                 ret = package
                 if package.get('id') == "preheat":
@@ -186,10 +183,11 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     def postprocessor(self, in_queue, out_queue, exit_flag):
         try:
             while True:
-                if exit_flag.value == 10:
-                     break
 
-                package = None
+                print("exit_flag value::", exit_flag.value)
+
+                if exit_flag.value == 10:
+                    break
                 """
                 if in_queue.empty():
                     continue
@@ -197,9 +195,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                     package = in_queue.get()
                 """
                 package = in_queue.get()
-
-                ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package)}
-
+                ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package['pred'])}
                 """
                 if out_queue.full():
                     continue
@@ -224,9 +220,9 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         for i in range(0, self.infer_threads_num):
             status_vector[i] = self.status[i].value
         return {
-            'model'  : self.current_model_name,
-            'status' : status_vector,
-            #'error'  : "switch error: {}".format(self.switch_error),
+            'model': self.current_model_name,
+            'status': status_vector,
+            # 'error'  : "switch error: {}".format(self.switch_error),
         }
 
     # this function is expected a bool return value
@@ -252,4 +248,3 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     @utils.profiler_timer("AbstractBackend::_loadsData")
     def _loadsData(self, data):
         return json.loads(data)
-
