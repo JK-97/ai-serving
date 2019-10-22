@@ -195,7 +195,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                     package = in_queue.get()
                 """
                 package = in_queue.get()
-                ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package['pred'])}
+                ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package)}
                 """
                 if out_queue.full():
                     continue
