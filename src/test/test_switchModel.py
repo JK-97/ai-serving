@@ -19,7 +19,6 @@ def api_post2(model, type, port):
     """
     curl -X POST http://localhost:8080/api/v1alpha/switch -d '{"model": "example_model", "mode": "frozen", "preheat": "True"}'
     """
-    print("switch model -->>>", model,'---.>>>>',type)
     data = {
         # "model": sys.argv[1],
         # "device":  sys.argv[3],

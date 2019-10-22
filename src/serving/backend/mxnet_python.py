@@ -22,7 +22,6 @@ class ModelType(Enum):
 
 
 class MxNetBackend(ab.AbstractBackend):
-
     def __init__(self, collection, settings={}):
         super().__init__(collection, settings)
         self.pre_model = None
@@ -47,15 +46,16 @@ class MxNetBackend(ab.AbstractBackend):
         models = [os.path.join(detection_path, f) for f in models]
         self.model_object = self.load_model(models, self.model_type.value)
         # load json refer names & refer values
-        self.refer_vals = []
-        self.refer_names = []
-        json_path = self.current_model_path + self.json_path
-        with open(json_path, 'r') as jsf:
-            name_val_path = json.load(jsf)
-            for name, val in name_val_path.items():
-                self.refer_names.append(name)
-                self.refer_vals.append(val[0])
-        self.refer_vals = np.array(self.refer_vals)
+        if self.model_type == ModelType.MODEL_4:
+            self.refer_vals = []
+            self.refer_names = []
+            json_path = self.current_model_path + self.json_path
+            with open(json_path, 'r') as jsf:
+                name_val_path = json.load(jsf)
+                for name, val in name_val_path.items():
+                    self.refer_names.append(name)
+                    self.refer_vals.append(val[0])
+            self.refer_vals = np.array(self.refer_vals)
         self.current_model_path = self.collection_path
 
     def _loadParameter(self, load_data):

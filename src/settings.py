@@ -11,7 +11,7 @@ define("port", default=8080, help="run on the given port", type=int)
 
 settings = {
     'backend': "mxNet",
-    'collection_path': '/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/model/',
+    'collection_path': '/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/mxNet/',
     'redis.host': "localhost",
     'redis.port': "6379",
     'security': "0",
@@ -32,11 +32,11 @@ settings = {
     'be.rknnpy.preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
     'be.rknnpy.target': "rk3399pro",
 
-    'be.mxpy.preheat': "/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/model/model1/jx_all.jpg",
+    'be.mxpy.preheat': "/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/mxNet/model1/jx_all.jpg",
     'mxnet_json_path': '/refer_files/refer_json.json',
     'arch': 1,  # 0:GPU /  1:CPU
     'face_image_size': (112, 112),
-    "mxnet_identifier_suffix": "/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/model/model4/identify/insightface/model,0",
+    "mxnet_identifier_suffix": "/Users/zhouyou/Documents/jx.github.com/jxserving-framework/src/mxNet/model4/identify/insightface/mxNet,0",
 
 }
 
