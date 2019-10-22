@@ -162,7 +162,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                 """
                 package = in_queue.get()
 
-                package['pred'] = self._inferData(package)
+                package['pred'] = self._inferData(package['pre'])
                 package['class'] = self.classes
                 ret = package
                 if package.get('id') == "preheat":
