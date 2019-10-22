@@ -12,8 +12,8 @@ class TfLiteBackend(ab.AbstractBackend):
     @utils.profiler_timer("TfLiteBackend::_loadModel")
     def _loadModel(self, load_configs):
         try:
-            # load model pb
-            self.model_object = tf.lite.Interpreter(model_path=os.path.join(self.current_model_path, "model.tflite"))
+            # load mxNet pb
+            self.model_object = tf.lite.Interpreter(model_path=os.path.join(self.current_model_path, "mxNet.tflite"))
             self.model_object.allocate_tensors()
             self.input_details = self.model_object.get_input_details()
             self.output_details = self.model_object.get_output_details()

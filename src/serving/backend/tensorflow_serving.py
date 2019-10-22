@@ -35,7 +35,7 @@ class TfSrvBackend(ab.AbstractBackend):
                 except ValueError as e:
                     continue
         if latest_ver > 0:
-            logging.info("Using version <{}> of model {}".format(latest_ver, self.current_model_name))
+            logging.info("Using version <{}> of mxNet {}".format(latest_ver, self.current_model_name))
             tmp_path = os.path.join(self.current_model_path, str(latest_ver))
         else:
             raise RuntimeError("Cannot find a loadable version of {}".format(self.current_model_name))

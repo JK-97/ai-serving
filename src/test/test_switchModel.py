@@ -17,13 +17,13 @@ def api_get(port):
 
 def api_post2(model, type, port):
     """
-    curl -X POST http://localhost:8080/api/v1alpha/switch -d '{"model": "example_model", "mode": "frozen", "preheat": "True"}'
+    curl -X POST http://localhost:8080/api/v1alpha/switch -d '{"mxNet": "example_model", "mode": "frozen", "preheat": "True"}'
     """
-    print("switch model -->>>", model,'---.>>>>',type)
+    print("switch mxNet -->>>", model,'---.>>>>',type)
     data = {
-        # "model": sys.argv[1],
+        # "mxNet": sys.argv[1],
         # "device":  sys.argv[3],
-        "model": model,
+        "mxNet": model,
         "mode": "frozen",
         "device": "sd",
         "type": type,
@@ -39,16 +39,16 @@ model_num = 4
 
 def load_model():
     for i in range(0, model_num):
-        model_name = "model" + str(i + 1)
+        model_name = "mxNet" + str(i + 1)
         port = 8001 + i
         api_post2(model_name, i, port)
         while True:
             ret = api_get(port)
             if ret == 5:
-                print("\nload model{} succ \n".format(i))
+                print("\nload mxNet{} succ \n".format(i))
                 break
             elif ret == 1:
-                print("\nload model{} failed \n".format(i))
+                print("\nload mxNet{} failed \n".format(i))
                 break
             time.sleep(0.05)
 
