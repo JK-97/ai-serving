@@ -1,3 +1,5 @@
+import json
+
 import tornado.web
 import tornado.gen
 
@@ -10,7 +12,7 @@ class BaseHandler(tornado.web.RequestHandler):
 class AsyncHandler(BaseHandler):
     @property
     def executor(self):
-        return self.application.executor
+        return self.application.executor.submit()
 
     @tornado.gen.coroutine
     def async_worker(self, func, data):
@@ -26,10 +28,10 @@ class AsyncHandler(BaseHandler):
     def do_get(self, data):
         return 404, "async handler"
 
-    def post(self):
+    def post(self,data):
         data = json.loads(data)
         return self.async_worker(self.do_post, data)
 
-    def get(self):
+    def get(self,data):
         data = json.loads(data)
         return self.async_worker(self.do_get, data)
