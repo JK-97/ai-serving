@@ -3,6 +3,7 @@ from serving import utils
 from serving.core import queue as q
 from serving.backend import abstract_backend as ab
 from settings import settings
+import psutil
 
 BACKEND = None
 BEs = {}
@@ -13,6 +14,12 @@ class ErrorMessage():
         self.brief = brief
         self.message = message
 
+
+def cpu_info():
+    return psutil.cpu_percent(interval=1)
+
+def memory_info():
+    return psutil.virtual_memory().percent
 
 def createBackends(threads_num = 1):
     for i in range(0, threads_num):

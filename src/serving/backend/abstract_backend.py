@@ -15,6 +15,7 @@ from enum import Enum, unique
 from multiprocessing import Value
 from serving import utils
 from serving.core import queue as q
+from serving.core import runtime
 
 @unique
 class Type(Enum):
@@ -226,6 +227,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         return {
             'model'  : self.current_model_name,
             'status' : status_vector,
+            'cpu'    : runtime.cpu_info(),
+            'memory' : runtime.memory_info()
             #'error'  : "switch error: {}".format(self.switch_error),
         }
 
