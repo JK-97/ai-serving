@@ -14,7 +14,7 @@ define("port", default=8080, help="run on the given port", type=int)
 
 
 settings = {
-    'backend': "tensorflow-lite",
+    'backend': "tensorflow",
     'collection_path': "/home/ubuntu/ar_example_model",
     'redis.host': "localhost",
     'redis.port': "6379",

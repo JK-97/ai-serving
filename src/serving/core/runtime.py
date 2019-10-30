@@ -1,7 +1,7 @@
 import logging
 from serving import utils
-from serving.core import queue as q
 from serving.backend import abstract_backend as ab
+from serving.backend import supported_backend as sb
 from settings import settings
 import psutil
 
@@ -31,8 +31,7 @@ def loadBackends(load_data, backend_id=0):
     BEs[backend_id].initBackend(load_data)
 
 def inputData(infer_data, backend_id=0):
-    BEs[backend_id].importer(infer_data)
-    #return q.output_queue.get()
+    BEs[backend_id].enqueueData(infer_data)
     return {'see': "out"}
 
 def reporter(backend_id=0):
@@ -41,16 +40,16 @@ def reporter(backend_id=0):
 
 def newBackendWithCollection(collection):
     backend_type = utils.getKey('backend', dicts=settings,
-                          env_key='JXSRV_BACKEND', v=ab.BackendValidator)
+                          env_key='JXSRV_BACKEND', v=sb.BackendValidator)
 
-    if backend_type == ab.Type.TfPy:
+    if backend_type == sb.Type.TfPy:
         from serving.backend import tensorflow_python as tfpy
         return tfpy.TfPyBackend(collection, {
             'preheat': utils.getKey('be.tfpy.preheat', dicts=settings),
             'redis.host': utils.getKey('redis.host', dicts=settings),
             'redis.port': utils.getKey('redis.port', dicts=settings),
         })
-    if backend_type == ab.Type.TfSrv:
+    if backend_type == sb.Type.TfSrv:
         from serving.backend import tensorflow_serving as tfsrv
         return tfsrv.TfSrvBackend(collection, {
             'host': utils.getKey('be.tfsrv.host', dicts=settings),
@@ -59,7 +58,7 @@ def newBackendWithCollection(collection):
             'redis.host': utils.getKey('redis.host', dicts=settings),
             'redis.port': utils.getKey('redis.port', dicts=settings),
         })
-    if backend_type == ab.Type.Torch:
+    if backend_type == sb.Type.Torch:
         from serving.backend import torch_python as trpy
         return trpy.TorchPyBackend(collection, {
             'preheat': utils.getKey('be.trpy.preheat', dicts=settings),
@@ -67,7 +66,7 @@ def newBackendWithCollection(collection):
             'redis.host': utils.getKey('redis.host', dicts=settings),
             'redis.port': utils.getKey('redis.port', dicts=settings),
         })
-    if backend_type == ab.Type.RknnPy:
+    if backend_type == sb.Type.RknnPy:
         from serving.backend import rknn_python as rknnpy
         return rknnpy.RKNNPyBackend(collection, {
             'preheat': utils.getKey('be.rknnpy.preheat', dicts=settings),
@@ -75,7 +74,7 @@ def newBackendWithCollection(collection):
             'redis.host': utils.getKey('redis.host', dicts=settings),
             'redis.port': utils.getKey('redis.port', dicts=settings),
         })
-    if backend_type == ab.Type.TfLite:
+    if backend_type == sb.Type.TfLite:
         from serving.backend import tensorflow_lite as tflite
         return tflite.TfLiteBackend(collection, {
             'preheat': utils.getKey('be.tflite.preheat', dicts=settings),
