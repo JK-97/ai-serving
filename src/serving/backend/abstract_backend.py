@@ -106,21 +106,10 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                 if exit_flag.value == 10:
                      break
 
-                # batch inference
-                if self.configs['batchsize'] > 1:
-                    dic_for_inferData, ids_for_batch, pres_for_batch = self._createBatch(in_queue)
-                    result_for_inferDate = self._inferData(dic_for_inferData)
-                    dic_for_postdp = self._postProcessBatch(ids_for_batch, pres_for_batch, result_for_inferDate)
-                    for i in range(self.configs['batchsize']):
-                        dic_for_set = {}
-                        dic_for_set['id'] = dic_for_postdp['id'][i]
-                        dic_for_set['result'] = dic_for_postdp['result'][i]
-                        self.rPipe_for_raw_data.set(dic_for_set.get('id'), self.dumpData(dic_for_set))
-                # single inference
-                elif self.configs['batchsize'] == 1:
-                    pass
-                else: # batchsize < 1
-                    raise Exception("unsupported batchsize")
+                id_lists, result_lists = self._inferData(in_queue, self.configs['batchsize'])
+                for i in range(self.configs['batchsize']):
+                    self.rPipe_for_raw_data.set(id_lists[i], self.dumpData(result_lists[i]))
+
         except Exception as e:
             logging.exception(e)
             load_status.value = Status.Cleaning.value
@@ -148,18 +137,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         exit(-1)
 
     @abc.abstractmethod
-    def _inferData(self, infer_data):
-        logging.critical("AbstractBackend::_inference called")
-        exit(-1)
-
-    @abc.abstractmethod
-    def _createBatch(self, batchsize, in_queue):
-        logging.critical("AbstractBackend::_createBatch called")
-        exit(-1)
-
-    @abc.abstractmethod
-    def _postProcessBatch(self, ids_for_batch, pres_for_batch, result_for_inferDate):
-        logging.critical("AbstractBackend::_postProcessBatch called")
+    def _inferData(self, infer_data, batchsize):
+        logging.critical("AbstractBackend::_inferData called")
         exit(-1)
 
     @utils.profiler_timer("AbstractBackend::dumpData")
