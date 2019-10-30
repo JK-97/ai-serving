@@ -13,7 +13,7 @@ class Type(Enum):
     Torch   = 'pytorch'
     RknnPy  = 'rknn'
 
-def BackendValidator(value):
+def Validator(value):
     try:
         return Type(value), ""
     except ValueError as e:

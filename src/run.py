@@ -35,8 +35,6 @@ def main():
         from google.protobuf.internal import api_implementation
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
 
-    runtime.createBackends(1)
-
     app = TornadoApplication()
     app.listen(options.port)
     logging.info("start service at: {}".format(options.port))

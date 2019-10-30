@@ -32,20 +32,17 @@ class State(Enum):
 
 
 class AbstractBackend(metaclass=abc.ABCMeta):
-    def __init__(self, collection, configurations = {}):
-        self.status = {}
+    def __init__(self, configurations = {}):
         self.configs = configurations
         self.configs['model_name'] = ""
         self.configs['model_path'] = ""
         self.configs['labels'] = []
         self.configs['threshold'] = {}
-        self.configs['predp'] = None
-        self.configs['postdp'] = None
         self.configs['batchsize'] = 100
         self.configs['inferproc_num'] = 1
-        self.configs['model_storage'] = collection
 
         self.model_object = None
+        self.status = {}
         self.predp = None
         self.postdp = None
 
@@ -67,7 +64,7 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             # loading
 
             # validate model path
-            self.configs['model_path'] = os.path.join(self.configs['model_storage'], self.configs['model_name'])
+            self.configs['model_path'] = os.path.join(self.configs['storage'], self.configs['model_name'])
             if not os.path.isdir(self.configs['model_path']):
                 raise RuntimeError("model does not exist: {}".format(self.configs['model_path']))
             # load customized model pre-process and post-process functions
