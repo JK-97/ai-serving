@@ -94,22 +94,18 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             if not is_loaded_param:
                 self._loadParameter(switch_configs)
             # preheat
-            #preheat = False
-            #if preheat == True:
-            #    load_status.value = Status.Preheating.value
-            #    filepath = self.configurations.get('preheat')
-            #    self.importer({'uuid': "preheat", 'path': filepath})
-
+            if self.configs.get('preheat') is not None:
+                load_status.value = Status.Preheating.value
+                self.enqueueData({'uuid': "preheat", 'path': self.configs['preheat']})
+                self._inferData(in_queue, 1)
             # predicting loop
             load_status.value = Status.Running.value
             while True:
                 if exit_flag.value == 10:
                      break
-
                 id_lists, result_lists = self._inferData(in_queue, self.configs['batchsize'])
                 for i in range(self.configs['batchsize']):
                     self.rPipe_for_raw_data.set(id_lists[i], self.dumpData(result_lists[i]))
-
         except Exception as e:
             logging.exception(e)
             load_status.value = Status.Cleaning.value
