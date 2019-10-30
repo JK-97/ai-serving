@@ -38,9 +38,9 @@ class TfPyBackend(ab.AbstractBackend):
             # load tensorflow session
             model_type = utils.getKey('mode', dicts=load_configs, v=ModelTypeValidator)
             if model_type == ModelType.Frozen:
-                self._loadFrozenModel()
+                self.__loadFrozenModel()
             if model_type == ModelType.Unfrozen:
-                self._loadUnfrozenModel()
+                self.__loadUnfrozenModel()
 
             # set input/output tensor
             tensor_map = self.configs['model_configs'].get('tensors')
@@ -53,13 +53,12 @@ class TfPyBackend(ab.AbstractBackend):
 
             return True
         except Exception as e:
-            #self.tensor_map = {}
             self.output_tensor_vec = []
             self.input_tensor_vec = []
             raise e
 
-    @utils.profiler_timer("TfPyBackend::_loadFrozenModel")
-    def _loadFrozenModel(self):
+    @utils.profiler_timer("TfPyBackend::__loadFrozenModel")
+    def __loadFrozenModel(self):
         with tf.Graph().as_default():
             graph_def = tf.GraphDef()
             path = os.path.join(self.configs['model_path'], "saved_model.pb")
@@ -72,8 +71,8 @@ class TfPyBackend(ab.AbstractBackend):
             self.model_object = tf.Session(config=config)
             self.model_object.run(tf.global_variables_initializer())
 
-    @utils.profiler_timer("TfPyBackend::_loadUnfrozenModel")
-    def _loadUnfrozenModel(self):
+    @utils.profiler_timer("TfPyBackend::__loadUnfrozenModel")
+    def __loadUnfrozenModel(self):
         config = tf.ConfigProto()
         config.gpu_options.allow_growth=True
         config.gpu_options.per_process_gpu_memory_fraction = (1 - 0.01) / self.configs['inferproc_num']
@@ -87,63 +86,58 @@ class TfPyBackend(ab.AbstractBackend):
         pass
 
     @utils.profiler_timer("TfPyBackend::_inferData")
-    def _inferData(self, pre_p):
-        feed_list = utils.getKey('feed_list', dicts=pre_p)
+    def _inferData(self, input_queue, batchsize):
+        if batchsize < 1:
+            raise Exception("batchsize smaller than one")
+        id_lists, feed_lists, passby_lists = self.__buildBatch(input_queue, batchsize)
+        infer_lists = self.__inferBatch(feed_lists)
+        result_lists = self.__processBatch(infer_lists, passby_lists, batchsize)
+        return id_lists, result_lists
+
+    @utils.profiler_timer("TfPyBackend::__buildBatch")
+    def __buildBatch(self, in_queue, batchsize):
+        predp_data = [None] * batchsize
+        id_lists = [None] * batchsize
+        feed_lists = [None] * batchsize
+        passby_lists = [None] * batchsize
+
+        for i in range(batchsize):
+            package = self.rPipe_for_raw_data.blpop(in_queue)
+            if package is not None:
+                # blopop returns: (b'key', b'{...}')
+                predp_frame = self.loadData(package[-1])
+                id_lists[i] = predp_frame['uuid']
+                predp_data[i] = self.predp.pre_dataprocess(predp_frame)
+                feed_lists[i] = np.squeeze(predp_data[i]['feed_list'][0])
+                passby_lists[i] = predp_data[i]['passby']
+
+        feed_lists = np.array(feed_lists)
+        feed_lists = [feed_lists, False]
+
+        return id_lists, feed_lists, passby_lists
+
+    @utils.profiler_timer("TfPyBackend::__inferBatch")
+    def __inferBatch(self, feed_list):
         feeding = {}
         for index, t in enumerate(self.input_tensor_vec):
             feeding[t] = feed_list[index]
         return self.model_object.run(self.output_tensor_vec, feed_dict=feeding)
 
-    @utils.profiler_timer("TfPyBackend::_inferBatch")
-    def _createBatch(self, in_queue):
-        ids_for_batch = []
-        pres_for_batch = []
 
-        for i in range(self.configs['batchsize']):
-
-            package_for_raw_data = self.rPipe_for_raw_data.blpop(in_queue)
-
-            if package_for_raw_data != None:
-                package_for_predp = self.loadData(package_for_raw_data[-1])
-                data_for_infer = {'id': package_for_predp['uuid'],
-                                  'pre': self.predp.pre_dataprocess(package_for_predp)}
-
-            ids_for_batch.append(data_for_infer['id'])
-            pres_for_batch.append(data_for_infer['pre'])
-
-        shapes_for_batch = []
-        feed_lists = []
-        for i in range(len(pres_for_batch)):
-            shapes_for_batch.append(pres_for_batch[i]['shape'])
-            feed_lists.append(np.squeeze(pres_for_batch[i]['feed_list'][0]))
-        feed_lists = np.array(feed_lists)
-        feed_lists = [feed_lists, False]
-
-        dic_for_inferData = {}
-        dic_for_inferData['shape'] = shapes_for_batch
-        dic_for_inferData['feed_list'] = feed_lists
-
-        return dic_for_inferData, ids_for_batch, pres_for_batch
-
-    @utils.profiler_timer("TfPyBackend::_postPreocessBatch")
-    def _postProcessBatch(self, ids_for_batch, pres_for_batch, result_for_inferDate):
-        ids_for_postdp = []
-        result_for_postdp = []
+    @utils.profiler_timer("TfPyBackend::__processBatch")
+    def __processBatch(self, infer_lists, passby_lists, batchsize):
         labels = self.configs['model_configs'].get('labels')
+        result_lists = [None] * batchsize
 
-        for i in range(self.configs['batchsize']):
-            temp_package = {}
-            temp_package['id'] = ids_for_batch[i]
-            temp_package['pre'] = pres_for_batch[i]
-            temp_package['pred'] = [result_for_inferDate[0][i],
-                                    result_for_inferDate[1][i],
-                                    result_for_inferDate[2][i]]
-            temp_package['class'] = labels
+        for i in range(batchsize):
+            post_frame = {
+                'infers': [infer_lists[0][i],
+                           infer_lists[1][i],
+                           infer_lists[2][i]],
+                'labels': labels,
+                'passby': passby_lists[i]
+            }
+            result_lists[i] = self.postdp.post_dataprocess(post_frame)
 
-            ids_for_postdp.append(temp_package['id'])
-            result_for_postdp.append(self.postdp.post_dataprocess(temp_package))
+        return result_lists
 
-        dic_for_postdp = {}
-        dic_for_postdp = {'id': ids_for_postdp, 'result': result_for_postdp}
-
-        return dic_for_postdp

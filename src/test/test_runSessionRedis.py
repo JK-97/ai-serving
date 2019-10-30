@@ -8,7 +8,7 @@ import numpy as np
 import redis
 import uuid
 
-PCS = 100
+PCS = 900
 #PCS = 1
 
 def api_post(uid):
