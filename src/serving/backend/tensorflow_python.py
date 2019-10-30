@@ -27,8 +27,8 @@ def ModelTypeValidator(value):
 
 
 class TfPyBackend(ab.AbstractBackend):
-    def __init__(self, collection, configurations = {}):
-        super().__init__(collection, configurations)
+    def __init__(self, configurations = {}):
+        super().__init__(configurations)
         self.input_tensor_vec = []
         self.output_tensor_vec = []
 
