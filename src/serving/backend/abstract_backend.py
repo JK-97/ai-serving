@@ -14,16 +14,6 @@ import rapidjson as json
 from enum import Enum, unique
 from multiprocessing import Value
 from serving import utils
-from serving.core import queue as q
-from serving.core import runtime
-
-@unique
-class Type(Enum):
-    TfPy    = 'tensorflow'
-    TfLite  = 'tensorflow-lite'
-    TfSrv   = 'tensorflow-serving'
-    Torch   = 'pytorch'
-    RknnPy  = 'rknn'
 
 
 @unique
@@ -36,96 +26,63 @@ class Status(Enum):
     Running    = 5
 
 
-def BackendValidator(value):
-    try:
-        return Type(value), ""
-    except ValueError as e:
-        return None, "unsupported backend"
+@unique
+class State(Enum):
+    Exit       = 0
 
 
 class AbstractBackend(metaclass=abc.ABCMeta):
-    def __init__(self, collection, configurations = {}):
-        self.model_object = None
-        self.current_model_name = ""
-        self.current_model_path = ""
+    def __init__(self, configurations = {}):
+        self.configs = configurations
+        self.configs['model_name'] = ""
+        self.configs['model_path'] = ""
+        self.configs['labels'] = []
+        self.configs['threshold'] = {}
+        self.configs['batchsize'] = 100
+        self.configs['inferproc_num'] = 1
 
+        self.model_object = None
         self.status = {}
-        self.classes = []
         self.predp = None
         self.postdp = None
 
-        self.collection_path = collection
-        self.configurations = configurations
+        self.input_queue = 'input_queue'
+        self.output_queue = 'output_queue'
+        self.exit_flag = Value('h', 0)
 
-        self.multiple_mode = True
-        self.infer_threads_num = 1
-
-        rHost = utils.getKey('redis.host', self.configurations)
-        rPort = utils.getKey('redis.port', self.configurations)
-        self.rPipe = redis.Redis(host=rHost, port=rPort)
+        redisPool_for_raw_data = redis.ConnectionPool(
+            host=self.configs['redis.host'],
+            port=self.configs['redis.port'],
+            db=5)
+        self.rPipe_for_raw_data = redis.Redis(connection_pool=redisPool_for_raw_data)
 
     def initBackend(self, switch_configs):
         try:
-            decl_model_name = utils.getKey('model', dicts=switch_configs)
+            self.configs['model_name'] = utils.getKey('model', dicts=switch_configs)
             # if switch to same model, quick return
             # cleaning
             # loading
-            self.current_model_name = decl_model_name
 
-            decl_model_path = os.path.join(self.collection_path, self.current_model_name)
-            if not os.path.isdir(decl_model_path):
-                raise RuntimeError("model does not exist: {}".format(decl_model_path))
-            self.current_model_path = decl_model_path
-
-            if self.predp is None:
-                sys.path.append(self.current_model_path)
-                self.predp = importlib.import_module('pre_dataprocess')
-
-            if self.postdp is None:
-                sys.path.append(self.current_model_path)
-                self.postdp = importlib.import_module('post_dataprocess')
-
+            # validate model path
+            self.configs['model_path'] = os.path.join(self.configs['storage'], self.configs['model_name'])
+            if not os.path.isdir(self.configs['model_path']):
+                raise RuntimeError("model does not exist: {}".format(self.configs['model_path']))
+            # load customized model pre-process and post-process functions
+            sys.path.append(self.configs['model_path'])
+            self.predp = importlib.import_module('pre_dataprocess')
+            self.postdp = importlib.import_module('post_dataprocess')
+            # load extra configurations
+            with open(os.path.join(self.configs['model_path'], 'model_config.json')) as config_file:
+                self.configs['model_configs'] = self.loadData(config_file.read())
             # start process
-            self.preprocessor(q.input_queue, q.predp_queue, q.exit_flag)
-            for i in range(0, self.infer_threads_num):
+            for i in range(0, self.configs['inferproc_num']):
                 self.status[i] = Value('B', Status.Unloaded.value)
-                self.predictor(switch_configs, q.predp_queue, q.predict_queue, self.status[i], q.exit_flag)
-            self.postprocessor(q.predict_queue, q.output_queue, q.exit_flag)
-            self.exporter(q.output_queue, q.exit_flag)
+                self.predictor(switch_configs, self.input_queue, self.output_queue, self.status[i], self.exit_flag)
         except Exception as e:
             logging.exception(e)
 
-    def importer(self, infer_data):
-        q.input_queue.put(infer_data)
-
-    @utils.process
-    def preprocessor(self, in_queue, out_queue, exit_flag):
-        try:
-            while True:
-                if exit_flag.value == 10:
-                     break
-
-                package = None
-                """
-                if in_queue.empty():
-                    continue
-                else:
-                    package = in_queue.get()
-                """
-                package = in_queue.get()
-
-                ret = {'id': package['uuid'],
-                      'pre': self.predp.pre_dataprocess(package)}
-
-                """
-                if out_queue.full():
-                    continue
-                else:
-                    out_queue.put(ret)
-                """
-                out_queue.put(ret)
-        except Exception as e:
-            logging.exception(e)
+    def enqueueData(self, infer_data):
+        self.rPipe_for_raw_data.rpush(self.input_queue , self.dumpData(infer_data))
 
     @utils.process
     def predictor(self, switch_configs, in_queue, out_queue, load_status, exit_flag):
@@ -133,106 +90,42 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             # loading model object
             load_status.value = Status.Loading.value
             is_loaded_param = self._loadModel(switch_configs)
-            _ = self._loadModel(switch_configs)
             assert self.model_object is not None
             if not is_loaded_param:
                 self._loadParameter(switch_configs)
             # preheat
-            preheat = True
-            if preheat == True:
-                load_status.value = Status.Preheating.value
-                filepath = self.configurations.get('preheat')
-                self.importer({'uuid': "preheat", 'path': filepath})
+            #preheat = False
+            #if preheat == True:
+            #    load_status.value = Status.Preheating.value
+            #    filepath = self.configurations.get('preheat')
+            #    self.importer({'uuid': "preheat", 'path': filepath})
+
+            # predicting loop
             load_status.value = Status.Running.value
-            self.predictor_core(in_queue, out_queue, exit_flag)
+            while True:
+                if exit_flag.value == 10:
+                     break
+
+                id_lists, result_lists = self._inferData(in_queue, self.configs['batchsize'])
+                for i in range(self.configs['batchsize']):
+                    self.rPipe_for_raw_data.set(id_lists[i], self.dumpData(result_lists[i]))
+
         except Exception as e:
             logging.exception(e)
             load_status.value = Status.Cleaning.value
             self.model_object = None
             load_status.value = Status.Failed.value
 
-    def predictor_core(self, in_queue, out_queue, exit_flag):
-        try:
-            while True:
-                if exit_flag.value == 10:
-                     break
-
-                package = None
-                """
-                if in_queue.empty():
-                    continue
-                else:
-                    package = in_queue.get()
-                """
-                package = in_queue.get()
-
-                package['pred'] = self._inferData(package['pre'])
-                package['class'] = self.classes
-                ret = package
-                if package.get('id') == "preheat":
-                    logging.debug("skip preheat image")
-                    continue
-
-                """
-                if out_queue.full():
-                    continue
-                else:
-                    out_queue.put(ret)
-                """
-                out_queue.put(ret)
-        except Exception as e:
-            logging.exception(e)
-
-    @utils.process
-    def postprocessor(self, in_queue, out_queue, exit_flag):
-        try:
-            while True:
-                if exit_flag.value == 10:
-                     break
-
-                package = None
-                """
-                if in_queue.empty():
-                    continue
-                else:
-                    package = in_queue.get()
-                """
-                package = in_queue.get()
-
-                ret = {'id': package['id'], 'result': self.postdp.post_dataprocess(package)}
-
-                """
-                if out_queue.full():
-                    continue
-                else:
-                    out_queue.put(ret)
-                """
-                out_queue.put(ret)
-        except Exception as e:
-            logging.exception(e)
-
-    @utils.process
-    def exporter(self, o_queue, exit_flag):
-        try:
-            while True:
-                package = o_queue.get()
-                self.rPipe.set(package.get('id'), self._dumpsData(package))
-        except Exception as e:
-            logging.exception(e)
-
     def reportStatus(self):
         status_vector = {}
-        for i in range(0, self.infer_threads_num):
+        for i in range(0, self.configs['inferproc_num']):
             status_vector[i] = self.status[i].value
         return {
-            'model'  : self.current_model_name,
+            'model'  : self.configs['model_name'],
             'status' : status_vector,
-            'cpu'    : runtime.cpu_info(),
-            'memory' : runtime.memory_info()
             #'error'  : "switch error: {}".format(self.switch_error),
         }
 
-    # this function is expected a bool return value
     @abc.abstractmethod
     def _loadModel(self, load_configs):
         logging.critical("AbstractBackend::_loadModel called")
@@ -244,15 +137,16 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         exit(-1)
 
     @abc.abstractmethod
-    def _inferData(self, infer_data):
-        logging.critical("AbstractBackend::_inference called")
+    def _inferData(self, infer_data, batchsize):
+        logging.critical("AbstractBackend::_inferData called")
         exit(-1)
 
-    @utils.profiler_timer("AbstractBackend::_dumpsData")
-    def _dumpsData(self, data):
+    @utils.profiler_timer("AbstractBackend::dumpData")
+    def dumpData(self, data):
         return json.dumps(data)
 
-    @utils.profiler_timer("AbstractBackend::_loadsData")
-    def _loadsData(self, data):
+    @utils.profiler_timer("AbstractBackend::loadData")
+    def loadData(self, data):
         return json.loads(data)
+
 

@@ -1,11 +1,10 @@
 import logging
 from serving import utils
-from serving.core import queue as q
 from serving.backend import abstract_backend as ab
+from serving.backend import supported_backend as sb
 from settings import settings
 import psutil
 
-BACKEND = None
 BEs = {}
 
 class ErrorMessage():
@@ -21,65 +20,65 @@ def cpu_info():
 def memory_info():
     return psutil.virtual_memory().percent
 
-def createBackends(threads_num = 1):
-    for i in range(0, threads_num):
-        BEs[i] = newBackendWithCollection(utils.getKey('collection_path', dicts=settings,
-                                                      env_key='JXSRV_COLLECTION_PATH'))
+# [ATTENTION] these functions are very fragile, many vars haven't been validated
+def createAndLoadBackends(init_data):
+    logging.debug("called createAndLoadBackends")
+    bid = utils.getKey('bid', dicts=init_data, level=utils.Access.Optional)
+    if bid is not None:
+        return loadBackends(init_data, bid)
+    else:
+        bid = len(BEs)
+        BEs[bid] = createBackends(init_data)
+        return loadBackends(init_data, bid)
 
 def loadBackends(load_data, backend_id=0):
-    logging.debug("{}({}) to loadModel".format(backend_id, BEs[backend_id]))
-    BEs[backend_id].initBackend(load_data)
+    backend = BEs.get(backend_id)
+    if backend is not None:
+        backend.initBackend(load_data)
+        return {"status": "succ", "bid": str(backend_id)}
+    else:
+        return {"status": "failed", "msg": "cannot find backend"}
 
 def inputData(infer_data, backend_id=0):
-    BEs[backend_id].importer(infer_data)
-    #return q.output_queue.get()
-    return {'see': "out"}
+    BEs[backend_id].enqueueData(infer_data)
+    return {'status': "succ"}
 
 def reporter(backend_id=0):
-    logging.debug("backend: {}({})".format(backend_id, BEs[backend_id]))
-    return BEs[backend_id].reportStatus()
+    backend = BEs.get(backend_id)
+    if backend is not None:
+        return backend.reportStatus()
+    else:
+        return {"status": "failed", "msg": "cannot find backend"}
 
-def newBackendWithCollection(collection):
-    backend_type = utils.getKey('backend', dicts=settings,
-                          env_key='JXSRV_BACKEND', v=ab.BackendValidator)
+def createBackends(init_data):
+    configs = {}
+    configs['btype'] = utils.getKey('btype', dicts=init_data, v=sb.Validator)
+    configs['storage'] = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+    configs['preheat'] = utils.getKey('preheat', dicts=settings)
+    configs['redis.host'] = utils.getKey('redis.host', dicts=settings)
+    configs['redis.port'] = utils.getKey('redis.port', dicts=settings)
 
-    if backend_type == ab.Type.TfPy:
+    if configs['btype'] == sb.Type.TfPy:
         from serving.backend import tensorflow_python as tfpy
-        return tfpy.TfPyBackend(collection, {
-            'preheat': utils.getKey('be.tfpy.preheat', dicts=settings),
-            'redis.host': utils.getKey('redis.host', dicts=settings),
-            'redis.port': utils.getKey('redis.port', dicts=settings),
-        })
-    if backend_type == ab.Type.TfSrv:
+        return tfpy.TfPyBackend(configs)
+
+    if configs['btype'] == sb.Type.TfSrv:
         from serving.backend import tensorflow_serving as tfsrv
-        return tfsrv.TfSrvBackend(collection, {
-            'host': utils.getKey('be.tfsrv.host', dicts=settings),
-            'port': utils.getKey('be.tfsrv.rest_port', dicts=settings),
-            'preheat': utils.getKey('be.tfsrv.preheat', dicts=settings),
-            'redis.host': utils.getKey('redis.host', dicts=settings),
-            'redis.port': utils.getKey('redis.port', dicts=settings),
-        })
-    if backend_type == ab.Type.Torch:
+        configs['host'] = utils.getKey('be.tf.srv.host', dicts=settings)
+        configs['port'] = utils.getKey('be.tf.srv.rest_port', dicts=settings)
+        return tfsrv.TfSrvBackend(configs)
+
+    if configs['btype'] == sb.Type.Torch:
         from serving.backend import torch_python as trpy
-        return trpy.TorchPyBackend(collection, {
-            'preheat': utils.getKey('be.trpy.preheat', dicts=settings),
-            'mixed_mode': utils.getKey('be.trpy.mixed_mode', dicts=settings),
-            'redis.host': utils.getKey('redis.host', dicts=settings),
-            'redis.port': utils.getKey('redis.port', dicts=settings),
-        })
-    if backend_type == ab.Type.RknnPy:
+        configs['mixed_mode'] = utils.getKey('be.trpy.mixed_mode', dicts=settings),
+        return trpy.TorchPyBackend(configs)
+
+    if configs['btype'] == sb.Type.RknnPy:
         from serving.backend import rknn_python as rknnpy
-        return rknnpy.RKNNPyBackend(collection, {
-            'preheat': utils.getKey('be.rknnpy.preheat', dicts=settings),
-            'target': utils.getKey('be.rknnpy.target', dicts=settings),
-            'redis.host': utils.getKey('redis.host', dicts=settings),
-            'redis.port': utils.getKey('redis.port', dicts=settings),
-        })
-    if backend_type == ab.Type.TfLite:
+        configs['target'] = utils.getKey('be.rknnpy.target', dicts=settings),
+        return rknnpy.RKNNPyBackend(configs)
+
+    if configs['btype'] == sb.Type.TfLite:
         from serving.backend import tensorflow_lite as tflite
-        return tflite.TfLiteBackend(collection, {
-            'preheat': utils.getKey('be.tflite.preheat', dicts=settings),
-            'redis.host': utils.getKey('redis.host', dicts=settings),
-            'redis.port': utils.getKey('redis.port', dicts=settings),
-        })
+        return tflite.TfLiteBackend(configs)
 

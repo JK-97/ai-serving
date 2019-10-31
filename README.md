@@ -85,6 +85,8 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
   * `POST` `/api/v1alpha/switch`: non-block, use to load or switch a model
 ```
 {
+  bid:     "backend id"             # backend id, a new backend will be created if not given
+  btype:   "backend type"           # backend type, must be given if a new backend need to create
   model:   "model name"             # model's folder name under collection_path
   mode:    "model type"             # indicate which type of model is going to load
   device:  "device name"            # assign work load to a specific device if available

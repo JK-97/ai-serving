@@ -6,42 +6,57 @@ import time
 import logging
 import sys
 
-def api_get():
-    """
-    curl -X GET http://localhost:8080/api/v1alpha/switch
-    """
-    result = requests.get("http://localhost:8080/api/v1alpha/switch")
-    print(result.json())
-    return False
+create_post_data = {
+  'btype': "tensorflow",
+  'model': "",
+  'mode': "",
+  'device': "",
+  'preheat': True,
+}
 
+reload_post_data = {
+  'bid': 0,
+  'model': "",
+  'mode': "",
+  'device': "",
+  'preheat': True,
+}
 
+def get_status():
+    return requests.get("http://localhost:8080/api/v1alpha/switch")
 
-def api_post():
-    """
-    curl -X POST http://localhost:8080/api/v1alpha/switch -d '{"model": "example_model", "mode": "frozen", "preheat": "True"}'
-    """
-    data = {
-        "model": sys.argv[1],
-        "mode":  sys.argv[2],
-        "device":  sys.argv[3],
-        "preheat": True}
-    result = requests.post("http://localhost:8080/api/v1alpha/switch", data=json.dumps(data))
+def create_post():
+    create_post_data['btype'] = sys.argv[2]
+    create_post_data['model'] = sys.argv[3]
+    create_post_data['mode'] = sys.argv[4]
+    create_post_data['device'] = sys.argv[5]
+    result = requests.post("http://localhost:8080/api/v1alpha/switch", data=json.dumps(create_post_data))
+    return result
+
+def reload_post():
+    reload_post_data['bid'] = sys.argv[2]
+    reload_post_data['model'] = sys.argv[3]
+    reload_post_data['mode'] = sys.argv[4]
+    reload_post_data['device'] = sys.argv[5]
+    result = requests.post("http://localhost:8080/api/v1alpha/switch", data=json.dumps(reload_post_data))
     return result
 
 
-response = None
-try:
-    response = api_post()
-    print(response.json()['status'])
-    print(type(response.json()))
-except Exception as e:
-    print(response.json())
-    logging.critical(e)
-    exit(-1)
+if sys.argv[1] == "create":
+    try:
+        print(create_post().json())
+    except Exception as e:
+        logging.critical(e)
+        exit(-1)
+
+if sys.argv[1] == "reload":
+    try:
+        print(reload_post().json())
+    except Exception as e:
+        logging.critical(e)
+        exit(-1)
 
 while True:
-    ret = api_get()
-    if ret:
-        exit(0)
+    print(get_status().json())
     time.sleep(1)
 
