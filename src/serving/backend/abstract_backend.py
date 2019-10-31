@@ -10,6 +10,7 @@ import sys
 import redis
 import logging
 import importlib
+import cProfile, pstats
 import rapidjson as json
 from enum import Enum, unique
 from multiprocessing import Value
@@ -87,6 +88,9 @@ class AbstractBackend(metaclass=abc.ABCMeta):
     @utils.process
     def predictor(self, switch_configs, in_queue, out_queue, load_status, exit_flag):
         try:
+            pr = cProfile.Profile()
+            pr.enable()
+
             # loading model object
             load_status.value = Status.Loading.value
             is_loaded_param = self._loadModel(switch_configs)
@@ -115,6 +119,10 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             load_status.value = Status.Cleaning.value
             self.model_object = None
             load_status.value = Status.Failed.value
+
+        finally:
+            pr.disable()
+            pstats.Stats(pr).dump_stats('predictor.profile')
 
     def reportStatus(self):
         status_vector = {}
