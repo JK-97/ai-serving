@@ -8,7 +8,6 @@ import tornado.ioloop
 import tornado.web
 from tornado.options import options
 
-from serving.core import runtime
 from serving.urls import url_patterns
 from settings import settings
 
@@ -33,8 +32,6 @@ def main():
     if options.profile:
         from google.protobuf.internal import api_implementation
         logging.warning("Using protobuf implementation: {}".format(api_implementation.Type()))
-
-    runtime.createBackends(1)
 
     app = TornadoApplication()
     app.listen(options.port)

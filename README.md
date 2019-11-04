@@ -52,7 +52,7 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
 #### Usage
 
 * Config `settings.py`
-  * set `backend`: supports `tensorflow`, `tensorflow-serving` and `pytorch`
+  * set `backend`: supports `tensorflow`, `tensorflow-serving`, `tensorflow-lite` and `pytorch` 
   * set `collection_path`: a directory indicates where to store all models
   * set `security`: [ ] TODO
 
@@ -85,6 +85,8 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
   * `POST` `/api/v1alpha/switch`: non-block, use to load or switch a model
 ```
 {
+  bid:     "backend id"             # backend id, a new backend will be created if not given
+  btype:   "backend type"           # backend type, must be given if a new backend need to create
   model:   "model name"             # model's folder name under collection_path
   mode:    "model type"             # indicate which type of model is going to load
   device:  "device name"            # assign work load to a specific device if available
@@ -151,6 +153,12 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
 * Tensorflow Serving
   * `saved_model.pb`
   * `class.txt`
+  * `pre_dataprocess.py`
+  * `post_dataprocess.py`
+
+
+* Tensorflow Lite
+  * `model.tflite`
   * `pre_dataprocess.py`
   * `post_dataprocess.py`
 

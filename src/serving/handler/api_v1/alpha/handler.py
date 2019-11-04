@@ -7,18 +7,10 @@ from serving.handler.base import BaseHandler, AsyncHandler
 
 
 class DetectHandler(AsyncHandler):
-
     def get(self, *args, **kwargs):
         pass
 
     def post(self, *args, **kwargs):
-        """
-        POST:
-          "path"     : string, specify which image is sending to tensorflow model
-
-        Response:
-          "result"   : dict, model prediction result
-        """
         try:
             data = str(self.request.body, encoding="utf-8")
             self.finish(runtime.inputData(json.loads(data)))
@@ -30,14 +22,7 @@ class DetectHandler(AsyncHandler):
 
 
 class SwitchModelHandler(BaseHandler):
-
     def get(self, *args, **kwargs):
-        """
-        Response:
-          "model"   : string, current serving model
-          "status"  : string <"cleaning", "loading", "preheating", "loaded", "failed">, indicate current status of model switching
-          "error"   : string, error message when failed to load a model
-        """
         try:
             self.finish(runtime.reporter())
         except KeyError as e:
@@ -47,21 +32,10 @@ class SwitchModelHandler(BaseHandler):
             logging.info("UnboundLocalError: request too fast")
 
     def post(self, *args, **kwargs):
-        """
-        POST:
-          "model"   : string, specify the model that want to switch or load
-          "mode"    : string <"frozen", "unfrozen">, specify the model is a frozen model or unfrozen model
-          "device"  : string, specify which device to run the session
-          "preheat" : bool, specify whether to preheat the session
-
-        Response:
-          "status"  : string <"succ", "fail">, indicate whether a model is found correctly and
-        """
-
         try:
             data = str(self.request.body, encoding="utf-8")
-            runtime.loadBackends(json.loads(data), 0)
-            self.finish({"status": "succ"})
+            ret = runtime.createAndLoadBackends(json.loads(data))
+            self.finish(ret)
         except KeyError as e:
             logging.exception(e)
             self.send_error_response(status_code=400, message="missing key {}".format(e))
