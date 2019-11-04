@@ -11,25 +11,36 @@ import logging
 import threading
 from multiprocessing import Process
 from enum import Enum, unique # auto is available after python 3.7
-from tornado.options import options
-
 
 @unique
 class Access(Enum):
     Essential = 'essential'
     Optional  = 'optional'
 
+profile = False
 
 def profiler_timer(prompt):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            if options.profile:
+            if profile:
                 ts = time.time()
                 ret = func(*args, **kwargs)
                 te = time.time()
                 #logging.debug("{} elapse {} secs".format(prompt, te-ts))
                 print("{} elapse {} secs".format(prompt, te-ts))
                 return ret
+            else:
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def gate(gate_option, feature_func):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if gate_option:
+                feature_func()
+                return func(*args, **kwargs)
             else:
                 return func(*args, **kwargs)
         return wrapper

@@ -1,20 +1,25 @@
-# JXServing
+# JXServing OnBoard
 
 [Attention] This repo's git ignored all `*.c` file
 
-[Attention] In some system, protobuf will fallback to pure python implementation, which is *much slower*
-* `export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp` can help to solve
+[Attention] In some system, protobuf will fallback to pure python implementation, which is ***much slower***
+* `export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp` can help to solve this problem
+* Please verify that: `run.py:L6` sets to a correct protocbuf implementation
 
 [Attention] Currently only verified on `python3` environment
 
 
 #### Introduction
 
-* **JXServing** is designed to provide a unify Deep Learning (DL) detection API
-  * In the future, this may extend to a complete DL serving project
+* **JXServing OnBoard** is designed to:
+  * provide an unified Deep Learning (DL) detection interface
+  * a delegate agent of **JXServing Cloud**, under a distributed deployment
 
-* Currently supported DL framework: *Tensorflow*, *Tensorflow Serving* and *PyTorch*
-  * Working on *MXNet*
+* Currently supported DL framework:
+  * *Tensorflow*, *Tensorflow Serving*, *Tensorflow-Lite*
+  * *PyTorch*
+  * *RKNN*
+  * [ ] *MXNet*
 
 
 #### Components
@@ -29,7 +34,7 @@
 #### Installation
 
 * Requirements
-  * Depends on the backend you are using
+  * Depends on the backend you are using, install all
   * Ex1. Tensorflow on Jetson GPU
 ```
 apt-get -y install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev
@@ -49,24 +54,50 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
   * [ ] TODO
 
 
+#### Concept
+* JXServing Model (JSM)
+  * JSM is a folder that contains all information
+
+* **JXServing** has the following concepts
+  * For each inference, all data will pass through workflow shown as blow
+    * Image -> Pre-DataProcess -> DL Backend -> Post-DataProcess
+    * Here, Pre/Post-DataProcess are implemented by the model provider
+  * Pre-DataProcess
+    * `def pre_dataprocess(infer_data):`
+    * `infer_data` comes from HTTP Restful request (`/api/v1alpha/detect`)
+    * expect to return dictionary object which includes a data frame needed by DL framework
+  * Post-DataProcess
+    * `def post_dataprocess(pre_p, prediction, classes):`
+    * `pre_p` is Pre-DataProcess result, `prediction` is DL inference result
+    * `classes` is an array contains all classes supported by this DL model
+    * expect to return dictionary object which includes a data frame that you want to return to actual users
+
+
+
 #### Usage
 
 * Config `settings.py`
-  * set `backend`: supports `tensorflow`, `tensorflow-serving`, `tensorflow-lite` and `pytorch` 
-  * set `collection_path`: a directory indicates where to store all models
-  * set `security`: [ ] TODO
+  * set `storage`: path of a directory which stores all *JSM* bundle
+  * set `preheat`: path of an image which is used to preheat nerual network
+  * set `redis.host`: redis server host
+  * set `redis.port`: redis server port, by default it is "6379"
+  * [ ] set `security`
+  * other configurations need to check the specific list of each backend
 
-* Prepare models
-  * Copy model folder to the `collection_path` directory mentioned above
+* Prepare *JSM*
+  * Copy *JSM* bundle to the `storage` path you set in `settings.py`
   * See more details in **Serving Models** section
 
 * Run (w/ options)
   * format: `python3 run.py [options]`
   * `--port`, run on a specific port, by default is `8080`
-  * `--debug`, enter debug mode, print more messages
-  * `--profile`, enter profile mode, print profile messages
+  * `--debug`, enable debug mode, print much more debug messages
+  * `--profile`, enable profile mode, used to profile functions
 
-* Call HTTP Restful API
+* Call gRPC API
+  * [ ] Will be added soon
+
+* Call HTTP Restful API ***(Will Be Deprecated Very Soon)***
   * API version (prefix): `/api/v1alpha`
   * `POST` `/api/v1alpha/detect`: block, use to inference an image
 ```
@@ -110,24 +141,6 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
 
 * See more example under `src/test`
 
-
-#### Concept
-
-* **JXServing** has the following concept
-* For each inference, all data will pass the following workflow
-  * Image -> Pre-DataProcess -> DL Framework -> Post-DataProcess
-  * Here, Pre/Post-DataProcess, are implemented by the model provider
-
-* Pre-DataProcess
-  * `def pre_dataprocess(infer_data):`
-  * `infer_data` comes from HTTP Restful request (`/api/v1alpha/detect`)
-  * expect to return dictionary object which includes a data frame needed by DL framework
-
-* Post-DataProcess
-  * `def post_dataprocess(pre_p, prediction, classes):`
-  * `pre_p` is Pre-DataProcess result, `prediction` is DL inference result
-  * `classes` is an array contains all classes supported by this DL model
-  * expect to return dictionary object which includes a data frame that you want to return to actual users
 
 
 #### Serving Models
