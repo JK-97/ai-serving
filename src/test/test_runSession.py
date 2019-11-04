@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 import json
 import time
+import uuid
 from multiprocessing import Process
 
+import cv2
+import numpy as np
+import redis
 import requests
 
 # PCS = 40
@@ -16,33 +20,24 @@ def api_post(uid):
     """
     data = {
         "uuid": uid,
-        "path": "/Users/zhouyou/Documents/jx.github.com/jxserving/src/mxNet/model1/jx_all.jpg"
+        "path": "/Users/zhouyou/Desktop/pose.jpg"
     }
-    while True:
-        p = Process(target=requests.post, args=("http://localhost:8080/api/v1alpha/detect", json.dumps(data)))
-        p.start()
-        time.sleep(0.04)
+    result = requests.post("http://localhost:8080/api/v1alpha/detect", json.dumps(data))
+    print("status code:", result.status_code)
 
 
-"""
-for i in range (0, PCS):
-    th[i].start()
+def registry_redis(uid):
+    r = redis.Redis(host="localhost", port=6379,db=5)
+    v = None
+    while v is None:
+        v = r.get(uid)
+    data = dict()
+    data['data'] = json.loads((str(v, 'utf-8')))['data']
+    cv2.imwrite("/tmp/tf_lite123.jpg", np.asarray(data['data']))
+    print("success")
 
-for i in range (0, PCS):
-    th[i].join()
-"""
 
-"""
-det = []
-for i in range (0, PCS):
-    t1 = time.time()
-    th[i].join()
-    t2 = time.time()
-    det.append(t2-t1)
-    if len(det) > 20:
-        det.pop(0)
-    fps = 1/np.mean(det)
-    print(fps)
-
-#print(PCS/(t2-t1))
-"""
+if __name__ == '__main__':
+    uuid = str(uuid.uuid4())
+    api_post(uuid)
+    registry_redis(uuid)
