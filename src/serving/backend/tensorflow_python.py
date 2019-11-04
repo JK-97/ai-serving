@@ -43,7 +43,7 @@ class TfPyBackend(ab.AbstractBackend):
                 self.__loadUnfrozenModel()
 
             # set input/output tensor
-            tensor_map = self.configs['model_configs'].get('tensors')
+            tensor_map = self.configs['model_configs'].get('backend').get('tensors')
             self.input_tensor_vec = []
             for it in tensor_map['input']:
                 self.input_tensor_vec.append(self.model_object.graph.get_tensor_by_name(it))
@@ -102,7 +102,7 @@ class TfPyBackend(ab.AbstractBackend):
         passby_lists = [None] * batchsize
 
         for i in range(batchsize):
-            package = self.rPipe_for_raw_data.blpop(in_queue)
+            package = self.configs['queue.in'].blpop(in_queue)
             if package is not None:
                 # blopop returns: (b'key', b'{...}')
                 predp_frame = self.loadData(package[-1])

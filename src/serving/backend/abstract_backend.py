@@ -7,64 +7,84 @@
 import os
 import abc
 import sys
-import redis
 import logging
 import importlib
 import rapidjson as json
 from enum import Enum, unique
-from multiprocessing import Value
+from multiprocessing import Process, Value
 from serving import utils
 
 
 @unique
 class Status(Enum):
     Unloaded   = 0
-    Failed     = 1
-    Cleaning   = 2
-    Loading    = 3
-    Preheating = 4
-    Running    = 5
+    Cleaning   = 1
+    Loading    = 2
+    Preheating = 3
+    Running    = 4
+    Exited     = 5
+    Error      = 6
 
 
 @unique
 class State(Enum):
-    Exit       = 0
+    Initializing  = 0
+    Initialized   = 1
+    Cleaning      = 2
+    Cleaned       = 3
+    Loading       = 4
+    Loaded        = 5
+    Running       = 6
+    Exiting       = 7
+    Exited        = 8
+    Error         = 9
 
 
 class AbstractBackend(metaclass=abc.ABCMeta):
     def __init__(self, configurations = {}):
-        self.configs = configurations
+        self.state = Value('h', State.Initializing.value)
+
+        self.configs = configurations # inc: btype, storage, preheat, queue.in
         self.configs['model_name'] = ""
         self.configs['model_path'] = ""
+        self.configs['version'] = ""
         self.configs['labels'] = []
         self.configs['threshold'] = {}
-        self.configs['batchsize'] = 100
+        self.configs['batchsize'] = 1
+
         self.configs['inferproc_num'] = 1
+        self.inferproc_th = [None] * self.configs['inferproc_num']
+        self.inferproc_state = [Value('B', Status.Unloaded.value)] * self.configs['inferproc_num']
 
         self.model_object = None
-        self.status = {}
         self.predp = None
         self.postdp = None
 
-        self.input_queue = 'input_queue'
-        self.output_queue = 'output_queue'
-        self.exit_flag = Value('h', 0)
+        self.state.value = State.Initialized.value
 
-        redisPool_for_raw_data = redis.ConnectionPool(
-            host=self.configs['redis.host'],
-            port=self.configs['redis.port'],
-            db=5)
-        self.rPipe_for_raw_data = redis.Redis(connection_pool=redisPool_for_raw_data)
-
-    def initBackend(self, switch_configs):
+    def run(self, switch_configs):
         try:
-            self.configs['model_name'] = utils.getKey('model', dicts=switch_configs)
-            # if switch to same model, quick return
-            # cleaning
-            # loading
+            self.state.value = State.Cleaning.value
+            target_model = utils.getKey('model', dicts=switch_configs)
+            target_version = utils.getKey('version', dicts=switch_configs)
+            if self.configs['model_name'] == target_model and self.configs['version'] == target_version:
+                self.state.value = State.Running.value
+                return {'code': 0, 'msg': "reload as a same model"}
+            for i in range(self.configs['inferproc_num']):
+                if self.inferproc_th[i] is not None:
+                    logging.debug("th: >>>", i, "terminated")
+                    self.inferproc_th[i].terminate()
+            self.state.value = State.Cleaned.value
 
+            self.state.value = State.Loading.value
+            self.configs['model_name'] = target_model
+            self.configs['version'] = target_version
             # validate model path
-            self.configs['model_path'] = os.path.join(self.configs['storage'], self.configs['model_name'])
+            self.configs['model_path'] = os.path.join(
+                self.configs['storage'],
+                "models",
+                self.configs['model_name'],
+                self.configs['version'])
             if not os.path.isdir(self.configs['model_path']):
                 raise RuntimeError("model does not exist: {}".format(self.configs['model_path']))
             # load customized model pre-process and post-process functions
@@ -72,20 +92,24 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             self.predp = importlib.import_module('pre_dataprocess')
             self.postdp = importlib.import_module('post_dataprocess')
             # load extra configurations
-            with open(os.path.join(self.configs['model_path'], 'model_config.json')) as config_file:
-                self.configs['model_configs'] = self.loadData(config_file.read())
+            with open(os.path.join(self.configs['model_path'], 'distros.json')) as distro_file:
+                self.configs['model_configs'] = self.loadData(distro_file.read())
+            self.state.value = State.Loaded.value
+
             # start process
-            for i in range(0, self.configs['inferproc_num']):
-                self.status[i] = Value('B', Status.Unloaded.value)
-                self.predictor(switch_configs, self.input_queue, self.output_queue, self.status[i], self.exit_flag)
+            for i in range(self.configs['inferproc_num']):
+                self.inferproc_th[i] = Process(
+                    target=self.predictor,
+                    args=(switch_configs,
+                        self.inferproc_state[i], self.state,))
+                self.inferproc_th[i].start()
+            self.state.value = State.Running.value
         except Exception as e:
+            self.state.value = State.Error.value
             logging.exception(e)
+            return {'code': 1, 'msg': "an exception raised"}
 
-    def enqueueData(self, infer_data):
-        self.rPipe_for_raw_data.rpush(self.input_queue , self.dumpData(infer_data))
-
-    @utils.process
-    def predictor(self, switch_configs, in_queue, out_queue, load_status, exit_flag):
+    def predictor(self, switch_configs, load_status, state):
         try:
             # loading model object
             load_status.value = Status.Loading.value
@@ -97,30 +121,47 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             if self.configs.get('preheat') is not None:
                 load_status.value = Status.Preheating.value
                 self.enqueueData({'uuid': "preheat", 'path': self.configs['preheat']})
-                self._inferData(in_queue, 1)
+                self._inferData(self.configs['model_name']+self.configs['version'], 1)
             # predicting loop
             load_status.value = Status.Running.value
             while True:
-                if exit_flag.value == 10:
+                if self.state.value == State.Exiting.value:
                      break
-                id_lists, result_lists = self._inferData(in_queue, self.configs['batchsize'])
+                id_lists, result_lists = self._inferData(
+                    self.configs['model_name']+self.configs['version'],
+                    self.configs['batchsize'])
                 for i in range(self.configs['batchsize']):
-                    self.rPipe_for_raw_data.set(id_lists[i], self.dumpData(result_lists[i]))
+                    self.configs['queue.in'].set(id_lists[i], self.dumpData(result_lists[i]))
+            load_status.value = Status.Exited.value
         except Exception as e:
             logging.exception(e)
             load_status.value = Status.Cleaning.value
             self.model_object = None
-            load_status.value = Status.Failed.value
+            load_status.value = Status.Error.value
+
+    def enqueueData(self, infer_data):
+        self.configs['queue.in'].rpush(
+                 self.configs['model_name']+self.configs['version'],
+                 self.dumpData(infer_data))
 
     def reportStatus(self):
-        status_vector = {}
-        for i in range(0, self.configs['inferproc_num']):
-            status_vector[i] = self.status[i].value
+        status_vector = {'state': self.state.value}
+        if self.state.value >= State.Loading.value:
+            for i in range(0, self.configs['inferproc_num']):
+                status_vector[str(i)] = self.inferproc_state[i].value
         return {
             'model'  : self.configs['model_name'],
-            'status' : status_vector,
-            #'error'  : "switch error: {}".format(self.switch_error),
+            'status' : self.dumpData(status_vector),
+            'msg'    : "backend error: {}",
         }
+
+    def terminate(self):
+        _, exit = self.inferproc_all_exit()
+        if exit:
+            self.state.value = State.Exited.value
+            return {'code': 0, 'msg': ""}
+        else:
+            return {'code': 1, 'msg': "some inference process haven't finished"}
 
     @abc.abstractmethod
     def _loadModel(self, load_configs):

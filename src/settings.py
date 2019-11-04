@@ -4,17 +4,9 @@
 
 import os
 
-from tornado.options import define
-
-
-define("debug", default=False, help="debug mode")
-define("profile", default=False, help="profile mode")
-
-define("port", default=8080, help="run on the given port", type=int)
-
 
 settings = {
-    'storage': "/home/ubuntu/ar_example_model",
+    'storage': "/home/ubuntu/ar_example_storage",
     'preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
     'redis.host': "localhost",
     'redis.port': "6379",
