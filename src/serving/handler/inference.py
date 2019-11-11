@@ -1,4 +1,4 @@
-from ..core import runtime
+from ..core import backend
 from ..interface import common_pb2 as c_pb2
 from ..interface import inference_pb2 as inf_pb2
 from ..interface import inference_pb2_grpc as inf_pb2_grpc
@@ -12,9 +12,12 @@ class Inference(inf_pb2_grpc.InferenceServicer):
             'model': request.model,
             'version': request.version,
             'mode':  request.mode,
+            'encrypted': request.encrypted,
+            'a64key': request.a64key,
+            'pvtpth': request.pvtpth,
             'extra': request.extra,
         }
-        ret = runtime.createAndLoadModel(calm_data)
+        ret = backend.createAndLoadModel(calm_data)
         return c_pb2.ResultReply(
             code=ret['code'],
             msg=ret['msg'],
@@ -27,9 +30,12 @@ class Inference(inf_pb2_grpc.InferenceServicer):
             'model': request.model,
             'version': request.version,
             'mode':  request.mode,
+            'encrypted': request.encrypted,
+            'a64key': request.a64key,
+            'pvtpth': request.pvtpth,
             'extra': request.extra,
         }
-        ret = runtime.loadModel(calm_data, request.bid)
+        ret = backend.loadModel(calm_data, request.bid)
         return c_pb2.ResultReply(
             code=ret['code'],
             msg=ret['msg'],
@@ -40,7 +46,7 @@ class Inference(inf_pb2_grpc.InferenceServicer):
             'uuid': request.uuid,
             'path': request.path,
         }
-        ret = runtime.inferenceLocal(inf_data, request.bid)
+        ret = backend.inferenceLocal(inf_data, request.bid)
         return c_pb2.ResultReply(
             code=ret['code'],
             msg=ret['msg'],
@@ -52,7 +58,7 @@ class Inference(inf_pb2_grpc.InferenceServicer):
             'type':   request.type,
             'base64': request.base64,
         }
-        ret = runtime.inferenceRemote(inf_data, request.bid)
+        ret = backend.inferenceRemote(inf_data, request.bid)
         return c_pb2.ResultReply(
             code=ret['code'],
             msg=ret['msg'],

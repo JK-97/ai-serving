@@ -7,12 +7,16 @@
 import os
 import abc
 import sys
+import rsa
 import logging
+import binascii
 import importlib
 import rapidjson as json
 from enum import Enum, unique
 from multiprocessing import Process, Value
 from serving import utils
+from serving.core import runtime
+from serving.core import sandbox
 
 
 @unique
@@ -62,8 +66,11 @@ class AbstractBackend(metaclass=abc.ABCMeta):
 
         self.state.value = State.Initialized.value
 
+    @utils.gate(runtime.FGs['enable_device_validation'], runtime.default_dev_validator)
     def run(self, switch_configs):
         try:
+            if not runtime.FGs['enable_sandbox'] and bool(utils.getKey('encrypted', dicts=switch_configs)):
+                raise RuntimeError("model is encrypted, but sandbox is not available")
             self.state.value = State.Cleaning.value
             target_model = utils.getKey('model', dicts=switch_configs)
             target_version = utils.getKey('version', dicts=switch_configs)
@@ -109,11 +116,24 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             logging.exception(e)
             return {'code': 1, 'msg': "an exception raised"}
 
+    @utils.gate(runtime.FGs['enable_device_validation'], runtime.default_dev_validator)
     def predictor(self, switch_configs, load_status, state):
         try:
             # loading model object
             load_status.value = Status.Loading.value
-            is_loaded_param = self._loadModel(switch_configs)
+            is_loaded_param = False
+            if runtime.FGs['enable_sandbox'] and bool(utils.getKey('encrypted', dicts=switch_configs)):
+                key = sandbox.sha256_recover(self.configs['a64'], self.configs['pvt'])
+                sandbox._decrypt(key,
+                    os.path.join(self.configs['model_path'], "model_core"),
+                    os.path.join(self.configs['model_path'], "model_dore"))
+                self.configs['model_filename'] = "model_dore"
+                is_loaded_param = self._loadModel(switch_configs)
+                os.remove(os.path.join(self.configs['model_path'], "model_dore"))
+            else:
+                logging.warning("loaded a model WITHOUT encryption")
+                self.configs['model_filename'] = "model_decore"
+                is_loaded_param = self._loadModel(switch_configs)
             assert self.model_object is not None
             if not is_loaded_param:
                 self._loadParameter(switch_configs)
@@ -134,7 +154,10 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                     self.configs['queue.in'].set(id_lists[i], self.dumpData(result_lists[i]))
             load_status.value = Status.Exited.value
         except Exception as e:
-            logging.exception(e)
+            if runtime.dev_debug:
+                logging.exception(e)
+            else:
+                logging.error(e)
             load_status.value = Status.Cleaning.value
             self.model_object = None
             load_status.value = Status.Error.value

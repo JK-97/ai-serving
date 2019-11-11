@@ -61,7 +61,7 @@ class TfPyBackend(ab.AbstractBackend):
     def __loadFrozenModel(self):
         with tf.Graph().as_default():
             graph_def = tf.GraphDef()
-            path = os.path.join(self.configs['model_path'], "saved_model.pb")
+            path = os.path.join(self.configs['model_path'], self.configs['model_filename'])
             with open(path, "rb") as model_file:
                 graph_def.ParseFromString(model_file.read())
                 tf.import_graph_def(graph_def, name="")
