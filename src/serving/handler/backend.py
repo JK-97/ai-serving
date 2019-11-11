@@ -1,4 +1,5 @@
-from serving.core import runtime
+from ..core import runtime
+from ..core import backend
 from ..interface import common_pb2 as c_pb2
 from ..interface import backend_pb2 as be_pb2
 from ..interface import backend_pb2_grpc as be_pb2_grpc
@@ -13,7 +14,7 @@ class Backend(be_pb2_grpc.BackendServicer):
     def ListRunningBackends(self, request, context):
         be_list = []
         for key, _ in runtime.BEs.items():
-            ret = runtime.listBackend(key)
+            ret = backend.listBackend(key)
             be_list.append(be_pb2.RunningReply.Status(
                 bid=key,
                 model=ret['model'],
@@ -23,14 +24,14 @@ class Backend(be_pb2_grpc.BackendServicer):
         return be_pb2.RunningReply(status=be_list)
 
     def InitializeBackend(self, request, context):
-        ret = runtime.createBackend({'btype': request.btype})
+        ret = backend.createBackend({'btype': request.btype})
         return c_pb2.ResultReply(
             code=0,
             msg=str(ret),
         )
 
     def ListBackend(self, request, context):
-        ret = runtime.listBackend(request.bid)
+        ret = backend.listBackend(request.bid)
         return be_pb2.RunningReply.Status(
             bid=request.bid,
             model=ret['model'],
@@ -39,7 +40,7 @@ class Backend(be_pb2_grpc.BackendServicer):
         )
 
     def TerminateBackend(self, request, context):
-        ret = runtime.terminateBackend(request.bid)
+        ret = backend.terminateBackend(request.bid)
         return c_pb2.ResultReply(
             code=ret['code'],
             msg=ret['msg']

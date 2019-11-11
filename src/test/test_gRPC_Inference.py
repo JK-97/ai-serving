@@ -28,6 +28,9 @@ def run():
         model="tfpy_frozen_ver",
         version="1",
         mode="frozen",
+        encrypted=1,
+        a64key="gWUXbcs1LnW8/RZLkykyGvbncsql1ok4HEvtbI8GW3AwD+V80A+ugF9wWFztuTdtQzvso0TwJR4aaglWoorTbSwlfWpmRST0PGC0OG0xBUkZtBhoJsoctC+nav/R8UozqFPhUrHydjgZfe3RfclOPXqk7krll9SsyZsTEy/M3z/knUKWkUJImZBmOYSWUxbZEpka+Mhocuvnq/HqUaTe4sIPTaaN/tvwtAj4ZMZZz3n9+JNEleUeO/A4cJXRlCFWyrWDxcjkYmH4oIfQGFYrQGKh2mzKRZOSimncoTOqkpJh/IUIJMczqmK0L7OZ3xMIVKQIJ3XVFIPDWkOvcHNzeA==",
+        pvtpth="/home/ubuntu/arthur/jxserving/src/serving/core/private.pem",
         extra="",
     ))
     print("grpc.inference.createAndLoadModel >>>", response.code, response.msg)
@@ -51,6 +54,9 @@ def run():
         model="tfpy_frozen_ver",
         version="1",
         mode="frozen",
+        encrypted=1,
+        a64key="gWUXbcs1LnW8/RZLkykyGvbncsql1ok4HEvtbI8GW3AwD+V80A+ugF9wWFztuTdtQzvso0TwJR4aaglWoorTbSwlfWpmRST0PGC0OG0xBUkZtBhoJsoctC+nav/R8UozqFPhUrHydjgZfe3RfclOPXqk7krll9SsyZsTEy/M3z/knUKWkUJImZBmOYSWUxbZEpka+Mhocuvnq/HqUaTe4sIPTaaN/tvwtAj4ZMZZz3n9+JNEleUeO/A4cJXRlCFWyrWDxcjkYmH4oIfQGFYrQGKh2mzKRZOSimncoTOqkpJh/IUIJMczqmK0L7OZ3xMIVKQIJ3XVFIPDWkOvcHNzeA==",
+        pvtpth="/home/ubuntu/arthur/jxserving/src/serving/core/private.pem",
         extra="",
     ))
     print("grpc.backend.reloadModel >>>", response.code, response.msg)
