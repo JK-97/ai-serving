@@ -43,7 +43,7 @@ class TfPyBackend(ab.AbstractBackend):
                 self.__loadUnfrozenModel()
 
             # set input/output tensor
-            tensor_map = self.configs['model_configs'].get('tensors')
+            tensor_map = self.configs['model_configs'].get('backend').get('tensors')
             self.input_tensor_vec = []
             for it in tensor_map['input']:
                 self.input_tensor_vec.append(self.model_object.graph.get_tensor_by_name(it))
@@ -61,7 +61,7 @@ class TfPyBackend(ab.AbstractBackend):
     def __loadFrozenModel(self):
         with tf.Graph().as_default():
             graph_def = tf.GraphDef()
-            path = os.path.join(self.configs['model_path'], "saved_model.pb")
+            path = os.path.join(self.configs['model_path'], self.configs['model_filename'])
             with open(path, "rb") as model_file:
                 graph_def.ParseFromString(model_file.read())
                 tf.import_graph_def(graph_def, name="")
@@ -102,7 +102,7 @@ class TfPyBackend(ab.AbstractBackend):
         passby_lists = [None] * batchsize
 
         for i in range(batchsize):
-            package = self.rPipe_for_raw_data.blpop(in_queue)
+            package = self.configs['queue.in'].blpop(in_queue)
             if package is not None:
                 # blopop returns: (b'key', b'{...}')
                 predp_frame = self.loadData(package[-1])
@@ -127,6 +127,8 @@ class TfPyBackend(ab.AbstractBackend):
     @utils.profiler_timer("TfPyBackend::__processBatch")
     def __processBatch(self, infer_lists, passby_lists, batchsize):
         labels = self.configs['model_configs'].get('labels')
+        threshold = self.configs['model_configs'].get('threshold')
+        mapping = self.configs['model_configs'].get('mapping')
         result_lists = [None] * batchsize
 
         for i in range(batchsize):
@@ -135,6 +137,8 @@ class TfPyBackend(ab.AbstractBackend):
                            infer_lists[1][i],
                            infer_lists[2][i]],
                 'labels': labels,
+                'threshold': threshold,
+                'mapping': mapping,
                 'passby': passby_lists[i]
             }
             result_lists[i] = self.postdp.post_dataprocess(post_frame)

@@ -10,6 +10,7 @@ from enum import Enum, unique
 class Type(Enum):
     TfPy    = 'tensorflow'
     TfSrv   = 'tensorflow-serving'
+    TfLite  = 'tensorlfow-lite'
     Torch   = 'pytorch'
     RknnPy  = 'rknn'
 
