@@ -127,6 +127,8 @@ class TfPyBackend(ab.AbstractBackend):
     @utils.profiler_timer("TfPyBackend::__processBatch")
     def __processBatch(self, infer_lists, passby_lists, batchsize):
         labels = self.configs['model_configs'].get('labels')
+        threshold = self.configs['model_configs'].get('threshold')
+        mapping = self.configs['model_configs'].get('mapping')
         result_lists = [None] * batchsize
 
         for i in range(batchsize):
@@ -135,6 +137,8 @@ class TfPyBackend(ab.AbstractBackend):
                            infer_lists[1][i],
                            infer_lists[2][i]],
                 'labels': labels,
+                'threshold': threshold,
+                'mapping': mapping,
                 'passby': passby_lists[i]
             }
             result_lists[i] = self.postdp.post_dataprocess(post_frame)

@@ -21,10 +21,10 @@ Ps = {
 
 BEs = {}
 Conns = {
-    'redis.pool': redis.ConnectionPool(
-                       host=utils.getKey('redis.host', dicts=settings),
-                       port=utils.getKey('redis.port', dicts=settings),
-                       db=5),
+  'redis.pool': redis.ConnectionPool(
+                     host=utils.getKey('redis.host', dicts=settings),
+                     port=utils.getKey('redis.port', dicts=settings),
+                     db=5),
 }
 
 

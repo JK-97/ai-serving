@@ -26,8 +26,8 @@ message ModelInfo {
 
 message DistroInfo {
   ModelInfo model = 1;
-  string threshold = 2;
-  string mapping = 3;
+  repeated float threshold = 2;
+  repeated string mapping = 3;
   string md5 = 4;
   string uuid = 5;
 }
