@@ -25,12 +25,30 @@ def checkModelExist(name, version):
     return path, os.path.exists(path)
 
 
-def encryptModel():
-    pass
-
-
-def decryptModel():
-    pass
+def updateDistro(model_name, model_version, thresh, mapping, md5):
+    try:
+        model_path, exist = checkModelExist(model_name, model_version)
+        if not exist:
+           return {'code': 1, 'msg': "failed to find requested model: "+model_name+"("+model_version+")"}
+        else:
+            storage = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+            modeldir = os.path.join(storage, "models", model_name, model_version)
+            distro = {}
+            with open(os.path.join(modeldir, "distros.json"), "r") as distro_file:
+                distro = json.loads(distro_file.read())
+            print(distro)
+            distro['threshold'] = list(thresh)
+            distro['mapping'] = list(mapping)
+            distro['md5'] = md5
+            print(distro)
+            print(type(list(thresh)))
+            print(type(list(mapping)))
+            with open(os.path.join(modeldir, "distros.json"), 'w') as new_distro_file:
+                 new_distro_file.write(json.dumps(distro, indent=2))
+            return {'code': 0, 'msg': "updated success"}
+    except Exception as e:
+        logging.exception(e)
+        return {'code': 1, 'msg': "update failed"}
 
 
 def packBundle(model_name, model_version):

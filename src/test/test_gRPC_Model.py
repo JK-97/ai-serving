@@ -67,8 +67,8 @@ def importModelDistro(m_stub, e_stub):
         bin_name = r.uuid
     response = m_stub.ImportModelDistro(m_pb2.DistroInfo(
         model=m_pb2.ModelInfo(model="tfpy_frozen_ver", version=["1"]),
-        threshold = "[0.1, 0.2, 0.3]",
-        mapping = "[lbl1, lbl1, lbl2]",
+        threshold=[0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+        mapping=["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "n", "n", "n", "n", "n", "n", "n"],
         uuid = bin_name,
     ))
     print("grpc.model.importModelDistro >>>", response.code, response.msg)

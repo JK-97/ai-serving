@@ -32,6 +32,13 @@ class Model(m_pb2_grpc.ModelServicer):
                 packList[ver] = ret
         return c_pb2.ResultReply(code=0, msg=json.dumps(packList))
 
+    def DistroConfig(self, request, context):
+        ret = model.updateDistro(
+                  request.model.model,
+                  request.model.version[0],
+                  request.threshold, request.mapping, request.md5)
+        return c_pb2.ResultReply(code=ret['code'], msg=ret['msg'])
+
     def ImportModelDistro(self, request, context):
         ret = model.unpackBundle(request.uuid, {
             'md5':       request.md5,
