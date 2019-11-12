@@ -16,9 +16,9 @@
   * a delegate agent of **JXServing Cloud**, under a distributed deployment
 
 * Currently supported DL framework:
-  * *Tensorflow*, *Tensorflow Serving*, *Tensorflow-Lite*
-  * *PyTorch*
-  * *RKNN*
+  * *Tensorflow*, [ ] *Tensorflow Serving*, [ ] *Tensorflow-Lite*
+  * [ ] *PyTorch*
+  * [ ] *RKNN*
   * [ ] *MXNet*
 
 
@@ -33,7 +33,7 @@
 
 #### Installation
 
-* Requirements
+* [ ] Requirements (OutDated)
   * Depends on the backend you are using, install all
   * Ex1. Tensorflow on Jetson GPU
 ```
@@ -43,9 +43,10 @@ pip3 install tensorflow-estimator==1.13.0 tensorboard==1.13.0
 pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v42 tensorflow-gpu==1.13.1+nv19.3
 ```
 
-* Build for release
-  * `python3 build_release.py`
+* Build for Release (This helps to protect source code)
+  * `python build_release.py` (in some environment, it needs `python3 build_release.py`)
   * after above, all release binaries are stored in `release-pack`
+  * ATTENTION: We noticed that generated binaries are highly related to the version of python that executed building command above, hence always use the same version of python to build or execute
 
 * Deployment
   * Copy the whole `release-pack` folder to the path you want
@@ -81,23 +82,22 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
   * set `preheat`: path of an image which is used to preheat nerual network
   * set `redis.host`: redis server host
   * set `redis.port`: redis server port, by default it is "6379"
-  * [ ] set `security`
   * other configurations need to check the specific list of each backend
 
 * Prepare *JSM*
   * Copy *JSM* bundle to the `storage` path you set in `settings.py`
-  * See more details in **Serving Models** section
+  * See more details in **Serving Bundle** section
 
-* Run (w/ options)
+* Run (w/ options) ***(Not Available after gRPC API checked-in)***
   * format: `python3 run.py [options]`
   * `--port`, run on a specific port, by default is `8080`
   * `--debug`, enable debug mode, print much more debug messages
   * `--profile`, enable profile mode, used to profile functions
 
 * Call gRPC API
-  * [ ] Will be added soon
+  * Please check `.proto` files stored in `src/serving/interface`
 
-* Call HTTP Restful API ***(Will Be Deprecated Very Soon)***
+* Call HTTP Restful API ***(Deprecated)***
   * API version (prefix): `/api/v1alpha`
   * `POST` `/api/v1alpha/detect`: block, use to inference an image
 ```
@@ -139,50 +139,14 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
 }
 ```
 
-* See more example under `src/test`
 
-
-
-#### Serving Models
+#### Serving Bundle
 
 * **JXServing** will automatically serving a model once this model is constrcuted with a conventional structure
 
 * Tensorflow (Frozen)
-  * `saved_model.pb`
-  * `class.txt`
-  * `tensor.json`
+  * `model_core`
   * `pre_dataprocess.py`
   * `post_dataprocess.py`
-
-* Tensorflow (Unfrozen)
-  * `saved_model.pb`
-  * `variables`
-  * `class.txt`
-  * `tensor.json`
-  * `pre_dataprocess.py`
-  * `post_dataprocess.py`
-
-
-* Tensorflow Serving
-  * `saved_model.pb`
-  * `class.txt`
-  * `pre_dataprocess.py`
-  * `post_dataprocess.py`
-
-
-* Tensorflow Lite
-  * `model.tflite`
-  * `pre_dataprocess.py`
-  * `post_dataprocess.py`
-
-
-* PyTorch (structureSplit)
-  * `model.py`
-  * `param.pth`
-  * `class.txt`
-  * `pre_dataprocess.py`
-  * `post_dataprocess.py`
-
-* MXNet
-  * [ ] TODO
+  * `distros.json`
 
