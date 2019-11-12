@@ -72,7 +72,7 @@ while True:
         v = r.get(th[i])
         if v != None:
             count = count+1
-            print(i, v)
+            #print(i, v)
     if count == PCS:
         break
 end_time = time.time()
