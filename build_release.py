@@ -1,8 +1,6 @@
 import os
 import sys, platform
 
-major_ver = "api_v1"
-minor_ver = "alpha"
 
 micro_arch = platform.machine()
 py_major = str(sys.version_info[0])
@@ -15,17 +13,49 @@ if os.path.exists(os.path.join(os.getcwd(), 'build')):
 if os.path.exists(os.path.join(os.getcwd(), 'release-pack')):
     os.system("rm -r release-pack")
 
+# Insert Device Info
+# TODO(arth)
+
 # Building
-print(">> Building", major_ver, "/", minor_ver, "...")
+print(">> Building 0.1.0 ...")
+os.system("make message-linux-amd64")
 source_files = [
     "serving/backend/abstract_backend.py",
+    "serving/backend/rknn_python.py",
+    "serving/backend/supported_backend.py",
+    "serving/backend/tensorflow_lite.py",
     "serving/backend/tensorflow_python.py",
     "serving/backend/tensorflow_serving.py",
+    "serving/backend/torch_python.py",
+
+    "serving/core/backend.py",
     "serving/core/runtime.py",
-    "serving/urls.py",
+    "serving/core/sandbox_helper.py",
+    "serving/core/sandbox.py",
+
+    "serving/handler/backend.py",
+    "serving/handler/connectivity.py",
+    "serving/handler/exchange.py",
+    "serving/handler/inference.py",
+    "serving/handler/model.py",
+
+    "serving/interface/backend_pb2_grpc.py",
+    "serving/interface/backend_pb2.py",
+    "serving/interface/common_pb2_grpc.py",
+    "serving/interface/common_pb2.py",
+    "serving/interface/connectivity_pb2_grpc.py",
+    "serving/interface/connectivity_pb2.py",
+    "serving/interface/exchange_pb2_grpc.py",
+    "serving/interface/exchange_pb2.py",
+    "serving/interface/inference_pb2_grpc.py",
+    "serving/interface/inference_pb2.py",
+    "serving/interface/model_pb2_grpc.py",
+    "serving/interface/model_pb2.py",
+
+    "serving/plugin/encbase64.py",
+
+    "serving/router.py",
     "serving/utils.py",
-    "serving/handler/base.py",
-    "serving/handler/"+major_ver+"/"+minor_ver+"/handler.py",
 ]
 
 srcs = []
