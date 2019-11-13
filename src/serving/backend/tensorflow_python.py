@@ -73,6 +73,8 @@ class TfPyBackend(ab.AbstractBackend):
 
     @utils.profiler_timer("TfPyBackend::__loadUnfrozenModel")
     def __loadUnfrozenModel(self):
+        os.rename(os.path.join(self.configs['model_path'], self.configs['model_filename']),
+                  os.path.join(self.configs['model_path'], "saved_model.pb"))
         config = tf.ConfigProto()
         config.gpu_options.allow_growth=True
         config.gpu_options.per_process_gpu_memory_fraction = (1 - 0.01) / self.configs['inferproc_num']
@@ -81,6 +83,8 @@ class TfPyBackend(ab.AbstractBackend):
             self.model_object,
             [tf.saved_model.tag_constants.SERVING],
             self.configs['model_path'])
+        os.rename(os.path.join(self.configs['model_path'], "saved_model.pb"),
+                  os.path.join(self.configs['model_path'], self.configs['model_filename']))
 
     def _loadParameter(self, load_configs):
         pass
