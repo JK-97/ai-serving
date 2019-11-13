@@ -27,8 +27,8 @@ def createBackend(init_data):
         configs['queue.in'] = redis.Redis(connection_pool=runtime.Conns['redis.pool'])
         configs['encrypted'] = utils.getKey('encrypted', dicts=init_data)
         if runtime.FGs['enable_sandbox']:
-            configs['a64'] = utils.getKey('a64key', dicts=init_data)
-            configs['pvt'] = utils.getKey('pvtpth', dicts=init_data)
+            configs['a64'] = utils.getKey('a64key', dicts=init_data, level=utils.Access.Optional)
+            configs['pvt'] = utils.getKey('pvtpth', dicts=init_data, level=utils.Access.Optional)
 
         new_backend = None
         if configs['btype'] == sb.Type.TfPy:
