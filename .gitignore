@@ -27,7 +27,6 @@ html
 .idea/
 __pycache__/
 .local_deploy/
-Makefile
 .flake8
 http/
 
