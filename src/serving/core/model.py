@@ -128,7 +128,8 @@ def unpackBundle(bundle_id, dist_info):
             else:
                 shutil.move(bundle_tmp,
                             os.path.join(target_model_path, dist_info['version']))
-                shutil.rmtree(bundle_tmp)
+                if os.path.exists(bundle_tmp):
+                    shutil.rmtree(bundle_tmp)
                 os.remove(bundle_path)
             return {'code': 0, 'msg': bundle_id}
     except Exception as e:
