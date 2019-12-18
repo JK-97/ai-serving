@@ -38,13 +38,13 @@ def updateDistro(model_name, model_version, thresh, mapping, md5):
             distro = {}
             with open(os.path.join(modeldir, "distros.json"), "r") as distro_file:
                 distro = json.loads(distro_file.read())
-            print(distro)
+            # print(distro)
             distro['threshold'] = list(thresh)
             distro['mapping'] = list(mapping)
             distro['md5'] = md5
-            print(distro)
-            print(type(list(thresh)))
-            print(type(list(mapping)))
+            # print(distro)
+            # print(type(list(thresh)))
+            # print(type(list(mapping)))
             with open(os.path.join(modeldir, "distros.json"), 'w') as new_distro_file:
                 new_distro_file.write(json.dumps(distro, indent=2))
             return {'code': 0, 'msg': "updated success"}
