@@ -124,13 +124,15 @@ def unpackBundle(bundle_id, dist_info):
             if not os.path.exists(target_model_path):
                 os.makedirs(target_model_path)
             if os.path.exists(os.path.join(target_model_path, dist_info['version'])):
-                return {'code': 1, 'msg': "version exist"}
-            else:
-                shutil.move(bundle_tmp,
-                            os.path.join(target_model_path, dist_info['version']))
-                if os.path.exists(bundle_tmp):
-                    shutil.rmtree(bundle_tmp)
-                os.remove(bundle_path)
+                shutil.rmtree(os.path.join(
+                    target_model_path, dist_info['version']))
+                # return {'code': 1, 'msg': "version exist"}
+
+            shutil.move(bundle_tmp,
+                        os.path.join(target_model_path, dist_info['version']))
+            if os.path.exists(bundle_tmp):
+                shutil.rmtree(bundle_tmp)
+            os.remove(bundle_path)
             return {'code': 0, 'msg': bundle_id}
     except Exception as e:
         logging.exception(e)
