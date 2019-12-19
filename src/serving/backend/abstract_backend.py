@@ -140,8 +140,10 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             # preheat
             if self.configs.get('preheat') is not None:
                 load_status.value = Status.Preheating.value
-                self.enqueueData({'uuid': "preheat", 'path': self.configs['preheat']})
-                self._inferData(self.configs['model_name']+self.configs['version'], 1)
+                a_uuid=str(uuid.uuid4())
+                self.enqueueData({'uuid': "preheat", 'path': self.configs['preheat']},a_uuid)
+                #self._inferData(self.configs['model_name']+self.configs['version'], 1)
+                self._inferData(a_uuid, 1)
             # predicting loop
             load_status.value = Status.Running.value
             while True:
@@ -162,10 +164,13 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             self.model_object = None
             load_status.value = Status.Error.value
 
-    def enqueueData(self, infer_data):
+    def enqueueData(self,infer_data,a_uuid=None):
+        if a_uuid is None:
+           a_uuid=self.configs['model_name']+self.configs['version']
         self.configs['queue.in'].rpush(
-                 self.configs['model_name']+self.configs['version'],
-                 self.dumpData(infer_data))
+                 #self.configs['model_name']+self.configs['version'],
+                 a_uuid,
+                 json.dumps(infer_data))
 
     def reportStatus(self):
         status_vector = {'state': self.state.value}
