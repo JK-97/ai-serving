@@ -22,13 +22,20 @@ profile = False
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     router.register_response(server)
-    server.add_insecure_port('[::]:50051')
 
-    runtime.loadPlugins()
+    binding_port = "[::]:50051"
+    if 'port' in settings:
+      binding_port = settings['port']
+    ret = server.add_insecure_port(binding_port)
+    if ret == 0:
+        logging.fatal("failed to bind on: {}".format(binding_port))
+        exit(-1)
 
-    server.start()
-    logging.info("start service at: {}".format("[::]:50051"))
     try:
+        runtime.loadPlugins()
+
+        server.start()
+        logging.info("start service at: {}".format(binding_port))
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
