@@ -32,6 +32,13 @@ class Exchange(ex_pb2_grpc.ExchangeServicer):
                             index=i,
                             block=bin_blob[i]
                         ))
+                yield ex_pb2.BinData(
+                    uuid=req.uuid,
+                    size=0,
+                    pack=ex_pb2.Block(
+                        index=0,
+                        block=b""
+                    ))
 
     def UploadBin(self, request_iterator, context):
         tmp = str(uuid.uuid4())
