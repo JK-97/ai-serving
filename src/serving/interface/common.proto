@@ -12,4 +12,3 @@ message ResultReply {
   string msg = 2;
 }
 
-

@@ -5,50 +5,59 @@ import "common.proto";
 package trueno;
 
 service Model {
-  // OnCloud
-  rpc ListStoredModel (PingRequest) returns (ListReply) {}
-  rpc ExportModelImage (ModelInfo) returns (ResultReply) {}
-  rpc DistroConfig (DistroInfo) returns (ResultReply) {}
-  rpc ImportModelDistro (DistroInfo) returns (ResultReply) {}
+  rpc ListModels (PingRequest) returns (ModelList) {}
+
+  rpc CreateModel (ModelInfo) returns (ResultReply) {}
+  rpc DistroConfig (ModelInfo) returns (ResultReply) {}
   rpc DeleteModel (ModelInfo) returns (ResultReply) {}
-  //rpc DecryptModel (ModelInfo) returns (ResultReply) {}
-  //rpc EvaluateModel (EvaluateRequest) returns (EvaluateReply) {}
+
+  rpc ExportModelImage (ModelInfo) returns (ResultReply) {}
+  rpc ImportModelDistro (ModelInfo) returns (ResultReply) {}
 }
 
-message ListReply {
-  repeated ModelInfo list = 1;
+/*
+message ModelDistro {
+  repeated float threshold = 1;
+  repeated string mapping = 2;
+  string hash = 3;
 }
+message ModelSpec {
+  string version = 1;
+  repeated ModelDistro dists = 2;
+}
+message ModelImpl {
+  string head = 1;
+  string bone = 2;
+  string impl = 3;
+  string hash = 4;
+  repeated ModelSpec specs = 5;
+}
+message ModelInfo {
+  string name = 1;
+  repeated string labels = 2;
+  string bundle = 3;
+  repeated ModelImpl impls = 4;
+}
+*/
 
 message ModelInfo {
-  string model = 1;
-  repeated string version = 2;
+  string name = 1;
+  repeated string labels = 2;
+  string bundle = 3;
+
+  string head = 4;
+  string bone = 5;
+  string impl = 6;
+  string implhash = 7;
+  string version = 8;
+
+  repeated string threshold = 9;
+  repeated string mapping = 10;
+  string modelext = 11;
+  string disthash = 12;
 }
 
-message DistroInfo {
-  ModelInfo model = 1;
-  repeated float threshold = 2;
-  repeated string mapping = 3;
-  string md5 = 4;
-  string uuid = 5;
-}
-
-message PushRequest {
-  uint64 id = 1;
-  bytes buffer = 2;
-  ModelInfo model = 3;
-}
-
-message EvaluateRequest {
-  ModelInfo model = 1;
-  string dataset = 2;
-  string lable = 3;
-}
-
-message EvaluateReply {
-  float map = 1;
-}
-
-message ProgressReply {
-  float precent = 1;
+message ModelList {
+  repeated ModelInfo models = 1;
 }
 
