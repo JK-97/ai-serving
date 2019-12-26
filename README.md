@@ -1,4 +1,4 @@
-# JXServing OnBoard
+# JXServing
 
 [Attention] This repo's git ignored all `*.c` file
 

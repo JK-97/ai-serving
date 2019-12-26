@@ -13,6 +13,7 @@ dev_debug = True
 FGs = {
   'enable_sandbox': True,
   'enable_device_validation': False,
+  'enable_regulator': True,
   'use_native_stat': True
 }
 Ps = {

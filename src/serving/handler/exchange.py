@@ -2,7 +2,6 @@ import os
 import sys
 import uuid
 import tarfile
-import rapidjson as json
 
 from serving import utils
 from ..interface import exchange_pb2 as ex_pb2

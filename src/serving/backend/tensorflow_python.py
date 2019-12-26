@@ -5,6 +5,7 @@
 """
 
 import os
+import json
 import logging
 import tensorflow as tf
 from enum import Enum, unique
@@ -36,14 +37,18 @@ class TfPyBackend(ab.AbstractBackend):
     def _loadModel(self, load_configs):
         try:
             # load tensorflow session
-            model_type = utils.getKey('mode', dicts=load_configs, v=ModelTypeValidator)
+            model_type = utils.getKey(
+                'm',
+                {'m': str.split(self.model_configs['impl'], ".")[1]},
+                v=ModelTypeValidator)
+            # model_type = utils.getKey('mode', dicts=load_configs, v=ModelTypeValidator)
             if model_type == ModelType.Frozen:
                 self.__loadFrozenModel()
             if model_type == ModelType.Unfrozen:
                 self.__loadUnfrozenModel()
 
             # set input/output tensor
-            tensor_map = self.configs['model_configs'].get('backend').get('tensors')
+            tensor_map = json.loads(self.model_configs['modelext']).get('tensors')
             self.input_tensor_vec = []
             for it in tensor_map['input']:
                 self.input_tensor_vec.append(self.model_object.graph.get_tensor_by_name(it))
@@ -61,30 +66,32 @@ class TfPyBackend(ab.AbstractBackend):
     def __loadFrozenModel(self):
         with tf.Graph().as_default():
             graph_def = tf.GraphDef()
-            path = os.path.join(self.configs['model_path'], self.configs['model_filename'])
+            path = os.path.join(self.model_path, self.model_filename)
             with open(path, "rb") as model_file:
                 graph_def.ParseFromString(model_file.read())
                 tf.import_graph_def(graph_def, name="")
             config = tf.ConfigProto()
-            config.gpu_options.allow_growth=True
-            config.gpu_options.per_process_gpu_memory_fraction = (1 - 0.01) / self.configs['inferproc_num']
+            # TODO(arth): FGs -> GPU config
+            # config.gpu_options.allow_growth=True
+            # config.gpu_options.per_process_gpu_memory_fraction = (1 - 0.01) / self.configs['inferproc_num']
             self.model_object = tf.Session(config=config)
             self.model_object.run(tf.global_variables_initializer())
 
     @utils.profiler_timer("TfPyBackend::__loadUnfrozenModel")
     def __loadUnfrozenModel(self):
-        os.rename(os.path.join(self.configs['model_path'], self.configs['model_filename']),
-                  os.path.join(self.configs['model_path'], "saved_model.pb"))
+        os.rename(os.path.join(self.model_path, self.model_filename),
+                  os.path.join(self.model_path, "saved_model.pb"))
         config = tf.ConfigProto()
-        config.gpu_options.allow_growth=True
-        config.gpu_options.per_process_gpu_memory_fraction = (1 - 0.01) / self.configs['inferproc_num']
+        # TODO(arth): FGs -> GPU config
+        # config.gpu_options.allow_growth=True
+        # config.gpu_options.per_process_gpu_memory_fraction = (1 - 0.01) / self.configs['inferproc_num']
         self.model_object = tf.Session(graph=tf.Graph(),config=config)
         tf.saved_model.loader.load(
             self.model_object,
             [tf.saved_model.tag_constants.SERVING],
             self.configs['model_path'])
-        os.rename(os.path.join(self.configs['model_path'], "saved_model.pb"),
-                  os.path.join(self.configs['model_path'], self.configs['model_filename']))
+        os.rename(os.path.join(self.model_path, "saved_model.pb"),
+                  os.path.join(self.model_path, self.model_filename))
 
     def _loadParameter(self, load_configs):
         pass
@@ -109,7 +116,7 @@ class TfPyBackend(ab.AbstractBackend):
             package = self.configs['queue.in'].blpop(in_queue)
             if package is not None:
                 # blopop returns: (b'key', b'{...}')
-                predp_frame = self.loadData(package[-1])
+                predp_frame = json.loads(package[-1].decode("utf-8"))
                 id_lists[i] = predp_frame['uuid']
                 predp_data[i] = self.predp.pre_dataprocess(predp_frame)
                 feed_lists[i] = np.squeeze(predp_data[i]['feed_list'][0])
@@ -130,9 +137,9 @@ class TfPyBackend(ab.AbstractBackend):
 
     @utils.profiler_timer("TfPyBackend::__processBatch")
     def __processBatch(self, infer_lists, passby_lists, batchsize):
-        labels = self.configs['model_configs'].get('labels')
-        threshold = self.configs['model_configs'].get('threshold')
-        mapping = self.configs['model_configs'].get('mapping')
+        labels = self.model_configs.get('labels')
+        threshold = [float(i) for i in self.model_configs.get('threshold')]
+        mapping = self.model_configs.get('mapping')
         result_lists = [None] * batchsize
 
         for i in range(batchsize):
