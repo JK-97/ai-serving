@@ -6,11 +6,11 @@ import os
 
 
 settings = {
-    'storage': "/home/ubuntu/ar_example_storage",
+    'port': "[::]:50051",
+    'storage': "/home/ubuntu/ar_storage",
     'preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
     'redis.host': "localhost",
     'redis.port': "6379",
-    'security': "0",
 
     'be.tfsrv.host': "127.0.0.1",
     'be.tfsrv.adapter': "restful",

@@ -5,12 +5,11 @@ import "common.proto";
 package trueno;
 
 service Inference {
-  rpc CreateAndLoadModel (LoadRequest) returns (ResultReply) {}
-  rpc ReloadModel (LoadRequest) returns (ResultReply) {}
   rpc InferenceLocal (InferRequest) returns (ResultReply) {}
   rpc InferenceRemote (InferRequest) returns (ResultReply) {}
 }
 
+/*
 message LoadRequest {
   string bid = 1;
   string btype = 2;
@@ -22,6 +21,7 @@ message LoadRequest {
   string pvtpth = 8;
   string extra = 9;
 }
+*/
 
 message InferRequest {
   string bid = 1;
