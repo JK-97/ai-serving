@@ -29,5 +29,10 @@ message-linux-amd64:
 		eval $$cmd; \
 		cmd="sed -i 's/common_pb2/interface.&/' $(DIR)/$${proto_file}_pb2_grpc.py"; \
 		eval $$cmd; \
-	done
+	done; \
+	echo "updating:" $(DIR)/backend.proto; \
+	cmd="sed -i 's/model_pb2/interface.&/' $(DIR)/backend_pb2.py"; \
+	eval $$cmd; \
+	cmd="sed -i 's/model_pb2/interface.&/' $(DIR)/backend_pb2_grpc.py"; \
+	eval $$cmd
 

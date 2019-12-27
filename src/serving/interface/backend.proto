@@ -1,35 +1,60 @@
 // backend.proto
 syntax = "proto3";
 import "common.proto";
+import "model.proto";
 
 package trueno;
 
 service Backend {
   rpc ListSupportedType (PingRequest) returns (SupportedReply) {}
-  rpc ListRunningBackends (PingRequest) returns (RunningReply) {}
-  rpc InitializeBackend (BackendRequest) returns (ResultReply) {}
-  rpc ListBackend (BackendRequest) returns (RunningReply.Status) {}
-  rpc TerminateBackend (BackendRequest) returns (ResultReply) {}
+  rpc ListRunningBackends (PingRequest) returns (BackendList) {}
+
+  rpc InitializeBackend (BackendInfo) returns (ResultReply) {}
+  rpc ListBackend (BackendInfo) returns (BackendStatus) {}
+  rpc ReloadModelOnBackend (LoadRequest) returns (ResultReply) {}
+  rpc TerminateBackend (BackendInfo) returns (ResultReply) {}
+
+  rpc CreateAndLoadModel (FullLoadRequest) returns (ResultReply) {}
 }
 
 message SupportedReply {
   string support = 1;
 }
 
-message RunningReply {
-
-  message Status {
-    string bid = 1;
-    string model = 2;
-    string status = 3;
-    string msg = 4;
-  }
-
-  repeated Status status = 1;
+message BackendInfo {
+  string bid = 1;
+  string impl = 2;
+  string storage = 3;
+  string preheat = 4;
+  uint32 batchsize = 5;
+  uint32 inferprocnum = 6;
+  string exporter = 7;
+  string backendext = 8;
 }
 
-message BackendRequest {
+message BackendStatus {
+  BackendInfo info = 1;
+  string status = 2;
+  string msg = 3;
+}
+
+message BackendList {
+  repeated BackendStatus backends = 1;
+}
+
+message LoadRequest {
   string bid = 1;
-  string btype = 2;
+  ModelInfo model = 2;
+  uint32 encrypted = 3;
+  string a64key = 4;
+  string pvtkey = 5;
+}
+
+message FullLoadRequest {
+  BackendInfo backend = 1;
+  ModelInfo model = 2;
+  uint32 encrypted = 3;
+  string a64key = 4;
+  string pvtkey = 5;
 }
 
