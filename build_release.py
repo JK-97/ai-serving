@@ -14,7 +14,7 @@ if os.path.exists(os.path.join(os.getcwd(), 'release-pack')):
     os.system("rm -r release-pack")
 
 # Insert Device Info
-# TODO(arth)
+# TODO(): overwrite device serial number
 
 # Building
 print(">> Building 0.1.0 ...")
@@ -23,12 +23,15 @@ source_files = [
     "serving/backend/abstract_backend.py",
     "serving/backend/rknn_python.py",
     "serving/backend/supported_backend.py",
-    "serving/backend/tensorflow_lite.py",
+    # "serving/backend/tensorflow_lite.py",
     "serving/backend/tensorflow_python.py",
     "serving/backend/tensorflow_serving.py",
-    "serving/backend/torch_python.py",
+    # "serving/backend/torch_python.py",
 
     "serving/core/backend.py",
+    "serving/core/inference.py",
+    "serving/core/model.py",
+    "serving/core/regulator.py",
     "serving/core/runtime.py",
     "serving/core/sandbox_helper.py",
     "serving/core/sandbox.py",
