@@ -109,8 +109,10 @@ class TfPyBackend(ab.AbstractBackend):
     def __buildBatch(self, in_queue, batchsize):
         predp_data = [None] * batchsize
         id_lists = [None] * batchsize
-        feed_lists = [None] * batchsize
+        feed_lists =np.array([[None] * batchsize] * len(self.input_tensor_vec))
         passby_lists = [None] * batchsize
+        input_type = json.loads(self.model_configs['modelext']).get('tensors')['input_type']
+
 
         for i in range(batchsize):
             package = self.configs['queue.in'].blpop(in_queue)
@@ -119,13 +121,19 @@ class TfPyBackend(ab.AbstractBackend):
                 predp_frame = json.loads(package[-1].decode("utf-8"))
                 id_lists[i] = predp_frame['uuid']
                 predp_data[i] = self.predp.pre_dataprocess(predp_frame)
-                feed_lists[i] = np.squeeze(predp_data[i]['feed_list'][0])
                 passby_lists[i] = predp_data[i]['passby']
 
-        feed_lists = np.array(feed_lists)
-        feed_lists = [feed_lists, False]
+                for j in range(len(self.input_tensor_vec)):
+                    feed_lists[j][i] = np.squeeze(predp_data[i]['feed_list'][j])
 
-        return id_lists, feed_lists, passby_lists
+        feed_lists_return = []
+        for i in range(len(self.input_tensor_vec)):
+            if int(input_type[i]) == 1:
+                feed_lists_return.append(np.array(feed_lists[i].tolist()))
+            if int(input_type[i]) == 0:
+                feed_lists_return.append(feed_lists[i][0])
+
+        return id_lists, feed_lists_return, passby_lists
 
     @utils.profiler_timer("TfPyBackend::__inferBatch")
     def __inferBatch(self, feed_list):
@@ -144,9 +152,7 @@ class TfPyBackend(ab.AbstractBackend):
 
         for i in range(batchsize):
             post_frame = {
-                'infers': [infer_lists[0][i],
-                           infer_lists[1][i],
-                           infer_lists[2][i]],
+                'infers': [infer_lists[k][i] for k in range(len(infer_lists))],
                 'labels': labels,
                 'threshold': threshold,
                 'mapping': mapping,
