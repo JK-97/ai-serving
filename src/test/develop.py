@@ -11,6 +11,12 @@ from PIL import Image
 from io import BytesIO
 from google.protobuf.json_format import ParseDict
 
+import os
+import sys
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
+
 from interface import common_pb2 as c_pb2
 from interface import backend_pb2 as be_pb2
 from interface import backend_pb2_grpc as be_pb2_grpc
@@ -21,22 +27,28 @@ from interface import exchange_pb2_grpc as e_pb2_grpc
 
 
 def createModel(m_stub):
+    ext = {
+        "tensors": {
+            'input_type': ["1", "0"],
+            'input':      ["Placeholder:0", "Placeholder_1:0"],
+            'output':     [
+                "resnet_v1_101_5/cls_score/BiasAdd:0",
+                "resnet_v1_101_5/cls_prob:0",
+                "add:0",
+                "resnet_v1_101_3/rois/concat:0"
+            ]
+        }
+    }
     example_model = {
-        'name':   "tfpy_frozen_ver",
-        'labels': [
-            "class2", "class_2", "jyz_pl", "yw_gkxfw", "hxq_gjzc", "bj_bpmh", "jyz", "jsxs", "yw_nc", "hxq_yfzc", "bj_zc", "bj_bjps", "jyz_lw", "jyz_zc", "hxq_yfps", "hxq_gjbs",
-        ],
-        'head': "YOLO",
-        'bone': "mobilenet",
-        'impl': "tensorflow.frozen",
+        "name": "iot_bdz_frcnn_frozen_new",
+        "labels": ["lbl1", "lbl2", "lbl3"],
+        "head": "rcnn",
+        "bone": "resnet",
+        "impl": "tensorflow.frozen",
         "version": "1",
-        "threshold": [
-            "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25", "0.25"
-        ],
-        'mapping': [
-            "class2", "class_2", "jyz_pl", "yw_gkxfw", "hxq_gjzc", "bj_bpmh", "jyz", "jsxs", "yw_nc", "hxq_yfzc", "bj_zc", "bj_bjps", "jyz_lw", "jyz_zc", "hxq_yfps", "hxq_gjbs",
-        ],
-        'modelext': "{\"tensors\": {\"input\": [\"input/input_data:0\", \"input/is_train:0\"], \"output\": [\"myoutput1:0\", \"myoutput2:0\", \"myoutput3:0\"]}}"
+        "threshold":["0.25", "0.25", "0.25"],
+        "mapping": ["map1", "map2", "map3"],
+        "modelext": json.dumps(ext),
     }
     response = m_stub.CreateModel(ParseDict(example_model, m_pb2.ModelInfo()))
     print("grpc.model.createModel >>>", response.code, response.msg)
