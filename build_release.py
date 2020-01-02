@@ -6,6 +6,18 @@ micro_arch = platform.machine()
 py_major = str(sys.version_info[0])
 py_minor = str(sys.version_info[1])
 
+
+def clean_pycache(filepath):
+    files = os.listdir(filepath)
+    for fd in files:
+        cur_path = os.path.join(filepath, fd)
+        if os.path.isdir(cur_path):
+            if fd == "__pycache__":
+                print("rm %s -rf" % cur_path)
+                os.system("rm %s -rf" % cur_path)
+            else:
+                clean_pycache(cur_path)
+
 # Cleaning
 print(">> Cleaning...")
 if os.path.exists(os.path.join(os.getcwd(), 'build')):
@@ -17,7 +29,13 @@ if os.path.exists(os.path.join(os.getcwd(), 'release-pack')):
 # TODO(): overwrite device serial number
 
 # Building
-print(">> Building 0.1.0 ...")
+version = None
+with open("VERSION", 'r') as ver_file:
+    version = ver_file.read()
+if version is None:
+    raise RuntimeError("failed to read version")
+print(">> Building", version, "...")
+os.system("make protoc")
 os.system("make message-linux-amd64")
 source_files = [
     "serving/backend/abstract_backend.py",
@@ -36,11 +54,11 @@ source_files = [
     "serving/core/sandbox_helper.py",
     "serving/core/sandbox.py",
 
-    "serving/handler/backend.py",
-    "serving/handler/connectivity.py",
-    "serving/handler/exchange.py",
-    "serving/handler/inference.py",
-    "serving/handler/model.py",
+    #"serving/handler/backend.py",
+    #"serving/handler/connectivity.py",
+    #"serving/handler/exchange.py",
+    #"serving/handler/inference.py",
+    #"serving/handler/model.py",
 
     "serving/interface/backend_pb2_grpc.py",
     "serving/interface/backend_pb2.py",
@@ -71,15 +89,20 @@ os.system("rm srcs.txt")
 
 # Constructing
 print(">> Constructing...")
-os.system("cp -r src release-pack")
+os.system("mkdir release-pack")
+os.system("cp src/run.py release-pack")
+os.system("cp -r src/serving release-pack/")
+os.system("cp src/requirements.txt release-pack/")
+os.system("cp settings_tmpl.py release-pack/settings.py")
 for s in source_files:
     rm_cmd = "rm release-pack/" + s.replace(".py", ".*")
     os.system(rm_cmd)
     so_name = (s.split('/')[-1]).split('.')[0]
     cp_cmd = "cp build/lib.linux-"+micro_arch+"-"+py_major+"."+py_minor+"/"+so_name+".cpython-"+py_major+py_minor+"m-"+micro_arch+"-linux-gnu.so release-pack/"+s.replace(".py", ".so")
     os.system(cp_cmd)
-#if os.path.exists(os.path.join(os.getcwd(), 'build')):
-#    os.system("rm -r build")
+clean_pycache("release-pack")
+
+if os.path.exists(os.path.join(os.getcwd(), 'build')):
+   os.system("rm -r build")
 
 print("Done")
-
