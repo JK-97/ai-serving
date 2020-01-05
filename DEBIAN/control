@@ -1,0 +1,7 @@
+Package: jxserving
+Version: REPLACE_VERSION
+Pre-Depends: python3-pip, python3-dev, python3-setuptools, libjpeg8, libjpeg62-dev
+Maintainer: songdanyang <songdanyang@jiangxing.ai>
+Description: JXServing OnBoard
+Homepage: http://gitlab.jiangxingai.com/system-dev/jxserving
+Architecture: REPLACE_ARCH

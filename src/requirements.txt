@@ -1,2 +1,10 @@
+grpcio==1.24.3
+grpcio-tools==1.24.3
 redis
 rsa
+pycrypto
+python-rapidjson
+protobuf
+psutil
+Pillow==6.2.1
+numpy==1.16.0
