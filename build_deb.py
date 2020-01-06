@@ -38,10 +38,11 @@ os.system("mkdir deb")
 os.system("cp -r DEBIAN deb/")
 os.system("cp -r release-pack deb/jxserving")
 os.system("cp VERSION deb/jxserving/")
+os.system("cp CHANGELOG deb/jxserving/")
 ctrl_content = None
 with open("deb/DEBIAN/control", 'r') as ctrl_file:
     ctrl_content = ctrl_file.read()
-ctrl_content = ctrl_content.replace("REPLACE_VERSION", version)
+ctrl_content = ctrl_content.replace("REPLACE_VERSION", version.strip())
 ctrl_content = ctrl_content.replace("REPLACE_ARCH", arch)
 with open("deb/DEBIAN/control", 'w') as ctrl_file:
     ctrl_file.write(ctrl_content)
