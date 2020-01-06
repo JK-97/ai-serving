@@ -5,10 +5,13 @@
 """
 
 import os
-import sys
+import logging
+import json
 from rknn.api import RKNN
 from serving import utils
 from serving.backend import abstract_backend as ab
+from settings import settings
+
 
 
 class RKNNPyBackend(ab.AbstractBackend):
@@ -18,12 +21,10 @@ class RKNNPyBackend(ab.AbstractBackend):
 
     @utils.profiler_timer("RKNNPyBackend::_loadModel")
     def _loadModel(self, load_configs):
-        rk_target = utils.getKey('target', dicts=self.configurations)
-
         self.model_object = RKNN()
-        path = os.path.join(self.current_model_path, "models.rknn")
+        path = os.path.join(self.model_path, self.model_filename)
         self.model_object.load_rknn(path)
-        ret = self.model_object.init_runtime(target = rk_target)
+        ret = self.model_object.init_runtime()
         if ret != 0:
             raise RuntimeError("Failed to initialize RKNN runtime enrvironment")
         return True
@@ -33,11 +34,52 @@ class RKNNPyBackend(ab.AbstractBackend):
         pass
 
     @utils.profiler_timer("RKNNPyBackend::_inferData")
-    def _inferData(self, pack):
-        data_type = pack.get('data_type')
-        if data_type is None:
-            return self.model_object.inference(inputs = pack.get('inputs'))
-        else:
-            return self.model_object.inference(inputs = pack.get('inputs'),
-                                              data_type = data_type)
+    def _inferData(self, input_queue, batchsize):
+        if batchsize != 1:
+            raise Exception("batchsize unequal one")
+        id_lists, feed_lists, passby_lists = self.__buildBatch(input_queue, batchsize)
+        infer_lists = self.__inferBatch(feed_lists)
+        result_lists = self.__processBatch(passby_lists, infer_lists, batchsize)
+        return id_lists, result_lists
 
+
+    @utils.profiler_timer("RKNNPyBackend::__buildBatch")
+    def __buildBatch(self, in_queue, batchsize):
+        predp_data = [None] * batchsize
+        id_lists = [None] * batchsize
+        feed_lists = [None] * batchsize
+        passby_lists = [None] * batchsize
+        index = batchsize - 1
+        package = self.configs['queue.in'].blpop(in_queue)
+        if package is not None:
+            predp_frame = json.loads(package[-1].decode("utf-8"))
+            id_lists[index] = predp_frame['uuid']
+            predp_data[index] = self.predp.pre_dataprocess(predp_frame)
+            feed_lists[index] = predp_data[index]['feed_list']
+            passby_lists[index] = predp_data[index]['passby']
+        return id_lists, feed_lists[index], passby_lists[index]
+
+
+    @utils.profiler_timer("RKNNPyBackend::__inferBatch")
+    def __inferBatch(self, feed_lists):
+        return self.model_object.inference(feed_lists)
+
+
+    @utils.profiler_timer("RKNNPyBackend::__processBatch")
+    def __processBatch(self, passby_lists, infer_lists, batchsize):
+        labels = self.model_configs.get('labels')
+        threshold = self.model_configs.get('threshold')
+        mapping = self.model_configs.get('mapping')
+        result_lists = [None] * batchsize
+        post_frame = {
+            'inputs': [infer_lists[0][0],
+                      infer_lists[1][0],
+                      infer_lists[2][0]],
+            'infers': infer_lists,
+            'labels': labels,
+            'passby': passby_lists,
+            'threshold': threshold,
+            'mapping': mapping,
+            }
+        result_lists[0] = self.postdp.post_dataprocess(post_frame) 
+        return result_lists
