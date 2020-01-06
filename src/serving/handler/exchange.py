@@ -1,21 +1,19 @@
 import os
 import sys
 import uuid
-import tarfile
 
-from serving import utils
 from ..interface import exchange_pb2 as ex_pb2
 from ..interface import exchange_pb2_grpc as ex_pb2_grpc
-from settings import settings
 
-chunk_size = 2*1024*1024
+chunk_size = 2 * 1024 * 1024
 block_limit = 500
+
 
 class Exchange(ex_pb2_grpc.ExchangeServicer):
 
     def DownloadBin(self, request_iterator, context):
         for req in request_iterator:
-            bin_path = os.path.join("/tmp", req.uuid+".tar.gz")
+            bin_path = os.path.join("/tmp", req.uuid + ".tar.gz")
             bin_size = sys.getsizeof(bin_path)
             bin_blob = []
             with open(bin_path, "rb") as f:
@@ -41,7 +39,7 @@ class Exchange(ex_pb2_grpc.ExchangeServicer):
 
     def UploadBin(self, request_iterator, context):
         tmp = str(uuid.uuid4())
-        bin_path = os.path.join("/tmp", tmp+".tar.gz")
+        bin_path = os.path.join("/tmp", tmp + ".tar.gz")
         response_list = []
         with open(bin_path, "ab") as dump:
             for req in request_iterator:
@@ -50,4 +48,3 @@ class Exchange(ex_pb2_grpc.ExchangeServicer):
                     break
                 dump.write(req.pack.block)
                 yield ex_pb2.BinData(uuid=tmp)
-

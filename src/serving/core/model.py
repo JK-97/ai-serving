@@ -1,11 +1,11 @@
-import os
-import uuid
-import json
-import shutil
 import hashlib
+import json
+import os
+import shutil
 import tarfile
-import logging
+
 from serving import utils
+from serving.core import error_code
 from settings import settings
 
 
@@ -31,10 +31,10 @@ def listModels(simple=False):
 
 def updateModel(model):
     if not checkModelExist(model['implhash'], model['version']):
-        raise RuntimeError("requested model not exist")
+        raise error_code.UpdateModelError(msg="requested model not exist")
     old_dist = loadModelInfoFromStorage(model['implhash'], model['version'])
     if old_dist['implhash'] != model['implhash']:
-        raise RuntimeError("incompatible model")
+        raise error_code.UpdateModelError(msg="incompatible model")
     model['disthash'] = generateModelDistHashByExtractInfo(model)
     dumpModelInfoToStorage(model['implhash'], model['version'], model)
 
@@ -45,7 +45,7 @@ def deleteModel(model):
     storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
     model_path = os.path.join(storage_path, "models", model['implhash'], model['version'])
     if not os.path.exists(model_path):
-        raise RuntimeError("model not exist")
+        raise error_code.DeleteModelError(msg="model not exist")
     shutil.rmtree(model_path)
 
 
@@ -64,33 +64,46 @@ def buildImageBundleFromDistroBundle(model):
 
     # distros.json -> configs.json
     distro = loadModelInfoFromStorage(model_hash, model_version)
-    del(distro['threshold'])
-    del(distro['mapping'])
-    del(distro['disthash'])
+
+    del (distro['threshold'])
+    del (distro['mapping'])
+    if 'disthash' in distro.keys():
+        del (distro['disthash'])
     os.remove(os.path.join(tmp_path, "distros.json"))
 
     with open(os.path.join(tmp_path, "configs.json"), 'w') as config_file:
-            config_file.write(json.dumps(distro, indent=2))
+        config_file.write(json.dumps(distro, indent=2))
 
     if os.path.exists(os.path.join(tmp_path, "__pycache__")):
         shutil.rmtree(os.path.join(tmp_path, "__pycache__"))
 
     # compress
-    tar = tarfile.open(os.path.join("/tmp", model_hash+".tar.gz"), "w:gz")
+    tar = tarfile.open(os.path.join("/tmp", model_hash + ".tar.gz"), "w:gz")
     tar.add(tmp_path, arcname=model_hash)
     tar.close()
     # clean tmp files
     shutil.rmtree(tmp_path)
 
 
+def unpackImageBundleAndImportWithDistroV2(detail):
+    fullhash = detail['fullhash']
+    full = fullhash.split('-')
+    if len(full) < 2:
+        raise error_code.FullHashValueError(msg=error_code.FullHashValueError.msg)
+    detail['implhash'] = full[0]
+    detail['version'] = full[1]
+    unpackImageBundleAndImportWithDistro(detail)
+
+
 def unpackImageBundleAndImportWithDistro(detail):
     bundle_id = detail["bundle"]
-    del(detail['bundle'])
+    del (detail['bundle'])
     given_implhash = detail['implhash']
     given_version = detail['version']
-    bundle_path = os.path.join("/tmp", bundle_id+".tar.gz")
+
+    bundle_path = os.path.join("/tmp", bundle_id + ".tar.gz")
     if not os.path.exists(bundle_path):
-        raise RuntimeError("failed to find temporary bundle")
+        raise error_code.ImportModelDistroError(msg="failed to find temporary bundle")
     validateModelInfo(detail)
 
     # decompress image
@@ -107,7 +120,7 @@ def unpackImageBundleAndImportWithDistro(detail):
     target_implhash = target_config['implhash']
     target_version = target_config['version']
     if target_implhash != given_implhash:
-        raise RuntimeError("incompatible model image")
+        raise error_code.ImportModelDistroError(msg="incompatible model image")
     os.remove(os.path.join(content_path, "configs.json"))
 
     # import bundle
@@ -117,7 +130,7 @@ def unpackImageBundleAndImportWithDistro(detail):
     if not os.path.exists(target_model_path):
         os.makedirs(target_model_path)
     if os.path.exists(os.path.join(target_model_path, given_version)):
-        raise RuntimeError("model already exist with specific version")
+        raise error_code.ImportModelDistroError(msg="model already exist with specific version")
     shutil.move(content_path, os.path.join(target_model_path, given_version))
     dumpModelInfoToStorage(given_implhash, given_version, detail)
 
@@ -130,22 +143,24 @@ def checkModelExist(model_hash, version):
         return False
     return True
 
+
 def validateModelInfo(model):
     if model['implhash'] != generateModelImplHashByExtractInfo(model):
-        raise RuntimeError("incompatible model, invalid implementation hash")
+        raise error_code.ImportModelDistroError(msg="incompatible model, invalid implementation hash")
     if len(model['labels']) != len(model['threshold']) or len(model['labels']) != len(model['mapping']):
-        raise RuntimeError("labels, threshold, mapping incompatible")
+        raise error_code.ImportModelDistroError(msg="labels, threshold, mapping incompatible")
+
 
 def loadModelInfoFromStorage(model_hash, version):
     if not checkModelExist(model_hash, version):
         raise ValueError("model not exist")
 
-    detail = {}
     storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
     dist_path = os.path.join(storage_path, "models", model_hash, version, "distros.json")
     with open(dist_path, 'r') as dist_file:
         detail = json.loads(dist_file.read())
     return detail
+
 
 def dumpModelInfoToStorage(model_hash, version, detail):
     if not checkModelExist(model_hash, version):
@@ -155,6 +170,7 @@ def dumpModelInfoToStorage(model_hash, version, detail):
     with open(os.path.join(storage_path, "models", model_hash, version, "distros.json"), 'w') as dist_file:
         dist_file.write(json.dumps(detail, indent=2))
 
+
 def generateModelImplHashByExtractInfo(model):
     hash_string = "{}{}{}{}".format(
         "".join(model['labels']),
@@ -163,6 +179,7 @@ def generateModelImplHashByExtractInfo(model):
         model['impl'],
     )
     return hashlib.md5(hash_string.encode('utf-8')).hexdigest()
+
 
 def generateModelDistHashByExtractInfo(model):
     hash_string = "{}{}".format(
