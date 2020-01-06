@@ -47,18 +47,14 @@ def initializeBackend(info):
 
     if impl_backend == sb.Type.TfSrv:
         from serving.backend import tensorflow_serving as tfsrv
-        configs['host'] = utils.getKey('be.tf.srv.host', dicts=settings)
-        configs['port'] = utils.getKey('be.tf.srv.rest_port', dicts=settings)
         backend_instance = tfsrv.TfSrvBackend(configs)
 
     if impl_backend == sb.Type.Torch:
         from serving.backend import torch_python as trpy
-        configs['mixed_mode'] = utils.getKey('be.trpy.mixed_mode', dicts=settings),
         backend_instance = trpy.TorchPyBackend(configs)
 
     if impl_backend == sb.Type.RknnPy:
         from serving.backend import rknn_python as rknnpy
-        configs['target'] = utils.getKey('be.rknnpy.target', dicts=settings),
         backend_instance = rknnpy.RKNNPyBackend(configs)
 
     if impl_backend == sb.Type.TfLite:

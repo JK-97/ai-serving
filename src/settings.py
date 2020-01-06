@@ -18,6 +18,7 @@ settings = {
     'be.tfsrv.rest_port': "8501",
 
     'be.trpy.mixed_mode': "1",
+    'be.trpy.device': "cuda",
 
     'be.rknnpy.target': "rk3399pro",
 }
