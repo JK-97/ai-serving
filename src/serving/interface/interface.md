@@ -355,3 +355,35 @@ example_model = {
 }    
 response = stub.ImportModelDistro(ParseDict(example_model, m_pb2.ModelInfo()))
 ```
+
+### `ImportModelDistroV2 (ModelInfoBrief) returns (ResultReply) {}`
+* import a specific model
+```python
+example_model = {
+  'name':   "test-model",
+  'labels': ["c0", "c1", "c2"],
+  'bundle': bin_name,
+  'head': "YOLO",
+  'bone': "mobilenet",
+  'impl': "tensorflow.frozen",
+  'fullhash': "a1b2c3-1",
+  "threshold": ["0.2", "0.2", "0.2"],
+  "mapping": ["d0", "d1", "d2"],
+}    
+response = stub.ImportModelDistroV2(ParseDict(example_model, m_pb2.ModelInfoBrief()))
+```
+
+### `CreateAndLoadModelV2 (FullLoadRequestV2) returns (ResultReply)`
+* try to create a new backend and try to load a specific model to this created backend, if failed, automatically delete this backend
+```python
+load_info = {
+  'backend': {'impl': "tensorflow.frozen"},
+  'model': {
+      'fullhash': "226a7354795692913f24bee21b0cd387-1",
+  },
+  'encrypted': 0,
+  'a64key': "",
+  'pvtkey': "",
+}
+response = stub.CreateAndLoadModelV2(ParseDict(load_info, be_pb2.FullLoadRequestV2()))
+```
