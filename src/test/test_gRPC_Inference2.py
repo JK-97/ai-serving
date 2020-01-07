@@ -11,11 +11,26 @@ from PIL import Image
 from io import BytesIO
 from google.protobuf.json_format import ParseDict
 
-from interface import common_pb2 as c_pb2
-from interface import backend_pb2 as be_pb2
-from interface import backend_pb2_grpc as be_pb2_grpc
-from interface import inference_pb2 as inf_pb2
-from interface import inference_pb2_grpc as inf_pb2_grpc
+from serving.interface import backend_pb2 as be_pb2
+from serving.interface import backend_pb2_grpc as be_pb2_grpc
+from serving.interface import inference_pb2 as inf_pb2
+from serving.interface import inference_pb2_grpc as inf_pb2_grpc
+
+
+def createAndLoadModelV2(stub):
+    load_info = {
+        'backend': {'impl': "tensorflow.frozen"},
+        'model': {
+            'fullhash': "226a7354795692913f24bee21b0cd387",
+        },
+        'encrypted': 0,
+        'a64key': "",
+        'pvtkey': "",
+    }
+    response = stub.CreateAndLoadModelV2(ParseDict(load_info, be_pb2.FullLoadRequestV2()))
+    print("grpc.backend.createAndLoadModel >>>", response.code, response.msg)
+    return response.msg
+
 
 def createAndLoadModel(stub):
     load_info = {
@@ -32,16 +47,20 @@ def createAndLoadModel(stub):
     print("grpc.backend.createAndLoadModel >>>", response.code, response.msg)
     return response.msg
 
+
 def listOne(stub, return_bid):
     backend_info = {'bid': return_bid}
     response = stub.ListBackend(ParseDict(backend_info, be_pb2.BackendInfo()))
     print("grpc.backend.listBackend >>>",
-        response.info,
-        response.status,
-        response.msg)
+          response.info,
+          response.status,
+          response.msg)
     return json.loads(response.status)["0"]
 
-test_image = "/home/ubuntu/ar_example_model/preheat.jpeg"
+
+test_image = "/home/zhouyou/jxserving_storage/preheat.jpeg"
+
+
 def inferLocal(inf_stub, return_bid, r):
     auuid = str(uuid.uuid4())
     infer = {
@@ -55,6 +74,7 @@ def inferLocal(inf_stub, return_bid, r):
     while v is None:
         v = r.get(auuid)
     print(v)
+
 
 def inferRemote(inf_stub, return_bid, r):
     img = Image.open(test_image)
@@ -76,12 +96,13 @@ def inferRemote(inf_stub, return_bid, r):
         v = r.get(auuid)
     print(v)
 
+
 def run():
     channel = grpc.insecure_channel("localhost:50051")
     be_stub = be_pb2_grpc.BackendStub(channel)
     inf_stub = inf_pb2_grpc.InferenceStub(channel)
 
-    ret = createAndLoadModel(be_stub)
+    ret = createAndLoadModelV2(be_stub)
 
     status = 0
     while status != 4:

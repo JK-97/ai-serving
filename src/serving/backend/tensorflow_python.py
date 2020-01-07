@@ -46,7 +46,6 @@ class TfPyBackend(ab.AbstractBackend):
                 self.__loadFrozenModel()
             if model_type == ModelType.Unfrozen:
                 self.__loadUnfrozenModel()
-
             # set input/output tensor
             tensor_map = json.loads(self.model_configs['modelext']).get('tensors')
             self.input_tensor_vec = []
