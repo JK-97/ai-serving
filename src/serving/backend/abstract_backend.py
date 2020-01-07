@@ -4,16 +4,15 @@
   Contact: songdanyang@jiangxing.ai
 """
 
-import abc
-import importlib
-import json
-import logging
 import os
+import abc
 import sys
+import json
+import redis
+import logging
+import importlib
 from enum import Enum, unique
 from multiprocessing import Process, Value
-
-import redis
 
 from serving import utils
 from serving.core import model

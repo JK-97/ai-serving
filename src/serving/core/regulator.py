@@ -3,14 +3,14 @@ import json
 from serving.core import runtime
 
 from serving.core import backend
-from serving.core import error_code
+from serving.core.error_code import ConstrainBackendInfoError,LimitBackendError
 
 
 def ConstrainBackendInfo(info):
     if info['batchsize'] > 1000:
-        raise error_code.ConstrainBackendInfoError(msg="batchsize exceed limitation")
+        raise ConstrainBackendInfoError(msg="batchsize exceed limitation")
     if info['inferprocnum'] > 2:
-        raise error_code.ConstrainBackendInfoError(msg="inference process number exceed limitation")
+        raise ConstrainBackendInfoError(msg="inference process number exceed limitation")
 
 
 def CheckBackendExistInstance(info, passby_model):
@@ -28,4 +28,4 @@ def CheckBackendExistInstance(info, passby_model):
 
 def LimitBackendInstance():
     if len(runtime.BEs) + 1 > 1:
-        raise error_code.LimitBackendError(msg="backend instance exceed limitation")
+        raise LimitBackendError(msg="backend instance exceed limitation")

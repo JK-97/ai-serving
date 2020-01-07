@@ -1,12 +1,12 @@
-import hashlib
-import json
 import os
+import json
 import shutil
+import hashlib
 import tarfile
 
 from serving import utils
-from serving.core import error_code
 from settings import settings
+from serving.core.error_code import UpdateModelError, DeleteModelError, FullHashValueError, ImportModelDistroError
 
 
 def createModel(model):
@@ -31,10 +31,10 @@ def listModels(simple=False):
 
 def updateModel(model):
     if not checkModelExist(model['implhash'], model['version']):
-        raise error_code.UpdateModelError(msg="requested model not exist")
+        raise UpdateModelError(msg="requested model not exist")
     old_dist = loadModelInfoFromStorage(model['implhash'], model['version'])
     if old_dist['implhash'] != model['implhash']:
-        raise error_code.UpdateModelError(msg="incompatible model")
+        raise UpdateModelError(msg="incompatible model")
     model['disthash'] = generateModelDistHashByExtractInfo(model)
     dumpModelInfoToStorage(model['implhash'], model['version'], model)
 
@@ -45,7 +45,7 @@ def deleteModel(model):
     storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
     model_path = os.path.join(storage_path, "models", model['implhash'], model['version'])
     if not os.path.exists(model_path):
-        raise error_code.DeleteModelError(msg="model not exist")
+        raise DeleteModelError(msg="model not exist")
     shutil.rmtree(model_path)
 
 
@@ -89,7 +89,7 @@ def unpackImageBundleAndImportWithDistroV2(detail):
     fullhash = detail['fullhash']
     full = fullhash.split('-')
     if len(full) < 2:
-        raise error_code.FullHashValueError(msg=error_code.FullHashValueError.msg)
+        raise FullHashValueError(msg=FullHashValueError.msg)
     detail['implhash'] = full[0]
     detail['version'] = full[1]
     unpackImageBundleAndImportWithDistro(detail)
@@ -103,7 +103,7 @@ def unpackImageBundleAndImportWithDistro(detail):
 
     bundle_path = os.path.join("/tmp", bundle_id + ".tar.gz")
     if not os.path.exists(bundle_path):
-        raise error_code.ImportModelDistroError(msg="failed to find temporary bundle")
+        raise ImportModelDistroError(msg="failed to find temporary bundle")
     validateModelInfo(detail)
 
     # decompress image
@@ -120,7 +120,7 @@ def unpackImageBundleAndImportWithDistro(detail):
     target_implhash = target_config['implhash']
     target_version = target_config['version']
     if target_implhash != given_implhash:
-        raise error_code.ImportModelDistroError(msg="incompatible model image")
+        raise ImportModelDistroError(msg="incompatible model image")
     os.remove(os.path.join(content_path, "configs.json"))
 
     # import bundle
@@ -130,7 +130,7 @@ def unpackImageBundleAndImportWithDistro(detail):
     if not os.path.exists(target_model_path):
         os.makedirs(target_model_path)
     if os.path.exists(os.path.join(target_model_path, given_version)):
-        raise error_code.ImportModelDistroError(msg="model already exist with specific version")
+        raise ImportModelDistroError(msg="model already exist with specific version")
     shutil.move(content_path, os.path.join(target_model_path, given_version))
     dumpModelInfoToStorage(given_implhash, given_version, detail)
 
@@ -146,9 +146,9 @@ def checkModelExist(model_hash, version):
 
 def validateModelInfo(model):
     if model['implhash'] != generateModelImplHashByExtractInfo(model):
-        raise error_code.ImportModelDistroError(msg="incompatible model, invalid implementation hash")
+        raise ImportModelDistroError(msg="incompatible model, invalid implementation hash")
     if len(model['labels']) != len(model['threshold']) or len(model['labels']) != len(model['mapping']):
-        raise error_code.ImportModelDistroError(msg="labels, threshold, mapping incompatible")
+        raise ImportModelDistroError(msg="labels, threshold, mapping incompatible")
 
 
 def loadModelInfoFromStorage(model_hash, version):

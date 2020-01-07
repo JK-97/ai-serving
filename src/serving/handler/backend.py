@@ -2,7 +2,9 @@ import logging
 
 from google.protobuf.json_format import MessageToDict, ParseDict
 
-from serving.core import error_code, error_reply
+from serving.core.error_code import ExistBackendError, RunTimeException, CreateAndLoadModelError, ListOneBackendError, \
+    ReloadModelOnBackendError, TerminateBackendError
+from serving.core import   error_reply
 from ..core import backend
 from ..interface import backend_pb2 as be_pb2
 from ..interface import backend_pb2_grpc as be_pb2_grpc
@@ -25,61 +27,61 @@ class Backend(be_pb2_grpc.BackendServicer):
         try:
             ret = backend.initializeBackend(MessageToDict(request), passby_model=None)
             return ParseDict(ret, c_pb2.ResultReply())
+        except CreateAndLoadModelError as e:
+            return error_reply.error_msg(c_pb2, CreateAndLoadModelError, exception=e)
         except Exception as e:
             logging.exception(e)
-            if isinstance(e, error_code.CreateAndLoadModelError):
-                return error_reply.error_msg(c_pb2, error_code.CreateAndLoadModelError, exception=e)
-            return error_reply.error_msg(c_pb2, error_code.RunTimeException,
+            return error_reply.error_msg(c_pb2, RunTimeException,
                                          msg="failed to initialize backend: {}".format(repr(e)))
 
     def ListBackend(self, request, context):
         try:
             ret = backend.listOneBackend(MessageToDict(request))
             return ParseDict(ret, be_pb2.BackendStatus())
+        except ListOneBackendError as e:
+            return error_reply.error_msg(c_pb2, ListOneBackendError, exception=e)
         except Exception as e:
             logging.exception(e)
-            if isinstance(e, error_code.ListOneBackendError):
-                return error_reply.error_msg(c_pb2, error_code.ListOneBackendError, exception=e)
             return be_pb2.BackendStatus()
 
     def ReloadModelOnBackend(self, request, context):
         try:
             ret = backend.reloadModelOnBackend(MessageToDict(request))
             return ParseDict(ret, c_pb2.ResultReply())
+        except ReloadModelOnBackendError as e:
+            return error_reply.error_msg(c_pb2, ReloadModelOnBackendError, exception=e)
         except Exception as e:
             logging.exception(e)
-            if isinstance(e, error_code.ReloadModelOnBackendError):
-                return error_reply.error_msg(c_pb2, error_code.ReloadModelOnBackendError, exception=e)
-            return error_reply.error_msg(c_pb2, error_code.RunTimeException,
+            return error_reply.error_msg(c_pb2, RunTimeException,
                                          msg="failed to (re)load model on backend: {}".format(repr(e)))
 
     def TerminateBackend(self, request, context):
         try:
             backend.terminateBackend(MessageToDict(request))
             return c_pb2.ResultReply(code=0, msg="")
+        except TerminateBackendError as e:
+            return error_reply.error_msg(c_pb2, TerminateBackendError, exception=e)
         except Exception as e:
             logging.exception(e)
-            if isinstance(e, error_code.TerminateBackendError):
-                return error_reply.error_msg(c_pb2, error_code.TerminateBackendError, exception=e)
-            return error_reply.error_msg(c_pb2, error_code.RunTimeException,
+            return error_reply.error_msg(c_pb2, RunTimeException,
                                          msg="failed to terminate backend: {}".format(repr(e)))
 
     def CreateAndLoadModel(self, request, context):
         try:
             ret = backend.createAndLoadModel(MessageToDict(request))
             return ParseDict(ret, c_pb2.ResultReply())
+        except ExistBackendError as e:
+            return error_reply.error_msg(c_pb2, ExistBackendError, exception=e)
         except Exception as e:
             logging.exception(e)
-            if isinstance(e, error_code.ExistBackendError):
-                return error_reply.error_msg(c_pb2, error_code.ExistBackendError, exception=e)
-            return error_reply.error_msg(c_pb2, error_code.RunTimeException, msg=repr(e))
+            return error_reply.error_msg(c_pb2, RunTimeException, msg=repr(e))
 
     def CreateAndLoadModelV2(self, request, context):
         try:
             ret = backend.createAndLoadModelV2(MessageToDict(request))
             return ParseDict(ret, c_pb2.ResultReply())
+        except ExistBackendError as e:
+            return error_reply.error_msg(c_pb2, ExistBackendError, exception=e)
         except Exception as e:
             logging.exception(e)
-            if isinstance(e, error_code.ExistBackendError):
-                return error_reply.error_msg(c_pb2, error_code.ExistBackendError, exception=e)
-            return error_reply.error_msg(c_pb2, error_code.RunTimeException, msg=repr(e))
+            return error_reply.error_msg(c_pb2, RunTimeException, msg=repr(e))

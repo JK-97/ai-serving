@@ -4,14 +4,15 @@ from serving.core import runtime
 from serving.core import regulator
 from serving.backend import supported_backend as sb
 from settings import settings
-from serving.core import error_code
+from serving.core.error_code import ExistBackendError, ReloadModelOnBackendError, TerminateBackendError, \
+    CreateAndLoadModelError, FullHashValueError, ConstrainBackendInfoError,ListOneBackendError
 
 
 def createAndLoadModelV2(info):
     fullhash = info['model']['fullhash']
     full = fullhash.split('-')
     if len(full) < 2:
-        raise error_code.FullHashValueError(msg=error_code.FullHashValueError.msg)
+        raise FullHashValueError(msg=FullHashValueError.msg)
     info['model']['implhash'] = full[0]
     info['model']['version'] = full[1]
     return createAndLoadModel(info)
@@ -32,18 +33,18 @@ def createAndLoadModel(info):
             createdBackendBid = ret['msg']
             info['bid'] = createdBackendBid
             return reloadModelOnBackend(info)
+    except ExistBackendError as e:
+        raise ExistBackendError(msg=repr(e))
+    except ReloadModelOnBackendError as e:
+        raise ReloadModelOnBackendError(msg=repr(e))
+    except TerminateBackendError as e:
+        raise TerminateBackendError(msg=repr(e))
+    except ConstrainBackendInfoError as e:
+        raise ConstrainBackendInfoError(msg=repr(e))
     except Exception as e:
-        if isinstance(e, error_code.ExistBackendError):
-            raise error_code.ExistBackendError(msg=repr(e))
-        if isinstance(e, error_code.ReloadModelOnBackendError):
-            raise error_code.ReloadModelOnBackendError(msg=repr(e))
-        if isinstance(e, error_code.TerminateBackendError):
-            raise error_code.TerminateBackendError(msg=repr(e))
-        if isinstance(e, error_code.ConstrainBackendInfoError):
-            raise error_code.ConstrainBackendInfoError(msg=repr(e))
         if createdBackendBid is not None:
             terminateBackend({'bid': createdBackendBid})
-        raise error_code.CreateAndLoadModelError(msg=repr(e))
+        raise CreateAndLoadModelError(msg=repr(e))
 
 
 @utils.limit(runtime.FGs['enable_regulator'], regulator.CheckBackendExistInstance)
@@ -84,7 +85,7 @@ def initializeBackend(info, passby_model=None):
         backend_instance = tflite.TfLiteBackend(configs)
 
     if backend_instance is None:
-        raise error_code.CreateAndLoadModelError(msg="unknown error, failed to create backend")
+        raise CreateAndLoadModelError(msg="unknown error, failed to create backend")
     bid = str(len(runtime.BEs))
     runtime.BEs[bid] = backend_instance
     logging.debug(runtime.BEs)
@@ -102,7 +103,7 @@ def listOneBackend(info):
     backend_request = parseValidBackendInfo(info)
     backend_instance = runtime.BEs.get(backend_request['bid'])
     if backend_instance is None:
-        raise error_code.ListOneBackendError(msg="failed to find backend")
+        raise ListOneBackendError(msg="failed to find backend")
     else:
         return backend_instance.reportStatus()
 
@@ -111,7 +112,7 @@ def reloadModelOnBackend(info):
     backend_request = parseValidBackendInfo(info)
     backend_instance = runtime.BEs.get(backend_request['bid'])
     if backend_instance is None:
-        raise error_code.ReloadModelOnBackendError(msg="failed to find backend")
+        raise ReloadModelOnBackendError(msg="failed to find backend")
     else:
         backend_instance.run(info)
         return {'code': 0, 'msg': str(backend_request['bid'])}
@@ -121,7 +122,7 @@ def terminateBackend(info):
     backend_request = parseValidBackendInfo(info)
     backend_instance = runtime.BEs.get(backend_request['bid'])
     if backend_instance is None:
-        raise error_code.TerminateBackendError(msg="failed to find backend")
+        raise TerminateBackendError(msg="failed to find backend")
     else:
         ret = backend_instance.terminate()
         del runtime.BEs[backend_request['bid']]
