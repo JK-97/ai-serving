@@ -9,6 +9,7 @@ import abc
 import sys
 import json
 import redis
+import signal
 import logging
 import importlib
 from enum import Enum, unique
@@ -160,6 +161,9 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                     self.configs['queue.in'].set(id_lists[i], json.dumps(result_lists[i]))
             load_status.value = Status.Exited.value
         except Exception as e:
+            rknn_err_msg = "RKNN_ERR_DEVICE_UNAVAILABLE"
+            if rknn_err_msg in repr(e):
+                os.kill(runtime.main_process_pid, signal.SIGTERM)
             if runtime.dev_debug:
                 logging.exception(e)
             else:

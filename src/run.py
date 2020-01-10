@@ -33,6 +33,7 @@ def serve():
 
     try:
         runtime.loadPlugins()
+        runtime.init_main_process_pid()
 
         server.start()
         logging.info("start service at: {}".format(binding_port))
