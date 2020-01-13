@@ -6,7 +6,7 @@ from serving.core import inference
 from ..interface import common_pb2 as c_pb2
 from ..interface import inference_pb2 as inf_pb2
 from ..interface import inference_pb2_grpc as inf_pb2_grpc
-
+from serving.utils import process
 
 class Inference(inf_pb2_grpc.InferenceServicer):
     def InferenceLocal(self, request, context):

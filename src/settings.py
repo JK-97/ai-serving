@@ -7,8 +7,8 @@ import os
 
 settings = {
     'port': "[::]:50051",
-    'storage': "/home/ubuntu/ar_storage",
-    'preheat': "/home/ubuntu/ar_example_model/preheat.jpeg",
+    'storage': "/home/hebi",
+    'preheat': "/home/hebi/test.jpeg",
     'redis.host': "localhost",
     'redis.port': "6379",
 
