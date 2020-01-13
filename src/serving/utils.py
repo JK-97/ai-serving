@@ -9,6 +9,7 @@ import sys
 import time
 import logging
 import threading
+import cv2
 from multiprocessing import Process
 from enum import Enum, unique # auto is available after python 3.7
 
@@ -88,3 +89,6 @@ def getKey(key, dicts, env_key='', v=None, level=Access.Essential):
             raise RuntimeError("Expected {}, but get {}".format(v, value))
     # return
     return value
+
+def imread_image(path):
+    return cv2.imread(path)

@@ -3,6 +3,7 @@ import uuid
 import redis
 import logging
 import importlib
+import multiprocessing
 from serving import utils
 from serving.core import sandbox
 from settings import settings
@@ -21,6 +22,8 @@ Ps = {
 }
 
 BEs = {}
+Images_pool = multiprocessing.Manager().dict()
+Task_Info = multiprocessing.Manager().list()
 Conns = {
   'redis.pool': redis.ConnectionPool(
                      host=utils.getKey('redis.host', dicts=settings),

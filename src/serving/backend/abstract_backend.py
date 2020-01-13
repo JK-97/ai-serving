@@ -7,19 +7,17 @@
 import os
 import abc
 import sys
-import rsa
 import json
 import redis
 import logging
-import binascii
 import importlib
+import cv2
 from enum import Enum, unique
 from multiprocessing import Process, Value
 from serving import utils
 from serving.core import model
 from serving.core import runtime
 from serving.core import sandbox
-import uuid
 
 @unique
 class Status(Enum):
@@ -145,7 +143,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             worker_queue_id = self.model_configs['implhash']+self.model_configs['version']
             if self.backend_configs.get('preheat') is not None:
                 load_status.value = Status.Preheating.value
-                self.enqueueData({'uuid': "preheat", 'path': self.backend_configs['preheat']})
+                runtime.Images_pool["preheat"] = utils.imread_image(self.backend_configs['preheat'])
+                self.enqueueData({'uuid': "preheat", 'image_type': "preheat"})
                 logging.debug("preheating _inferData")
                 self._inferData(worker_queue_id, 1)
                 logging.debug("preheated _inferData")
