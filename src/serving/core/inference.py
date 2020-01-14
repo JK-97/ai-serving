@@ -1,5 +1,4 @@
 import os
-import logging
 
 from serving import utils
 from serving.core import runtime
