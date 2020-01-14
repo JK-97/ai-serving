@@ -1,7 +1,22 @@
-Version:        1.0.0
-Date:
+Version:        0.3.0-alpha
+Date: Jan 07, 2020
 ---------------------
 - Add:
+       1. error_code
+- Fix: 
+       1.rknn exception
+Version:        0.2.0-alpha
+Date: Jan 07, 2020
+---------------------
+- Add:
+       1. RKNN, TF-serving, TF-lite, PyTorch backend
+- Fix:
+
+Version:        0.1.0-alpha
+Date: Jan 06, 2020
+---------------------
+- Add:
+       1. Test build
 - Fix:
 
 
@@ -9,3 +24,4 @@ Version:        0.0.0
 Date:
 ---------------------
 - Add:
+- Fix:

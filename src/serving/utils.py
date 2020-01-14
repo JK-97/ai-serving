@@ -5,13 +5,12 @@
 """
 
 import os
-import sys
 import time
 import logging
-import threading
 import cv2
 from multiprocessing import Process
 from enum import Enum, unique # auto is available after python 3.7
+from serving.core import error_code
 
 @unique
 class Access(Enum):
@@ -19,6 +18,7 @@ class Access(Enum):
     Optional  = 'optional'
 
 profile = False
+
 
 def profiler_timer(prompt):
     def decorator(func):
@@ -41,6 +41,20 @@ def gate(gate_option, feature_func):
         def wrapper(*args, **kwargs):
             if gate_option:
                 feature_func()
+                return func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def limit(gate_option, feature_func):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if gate_option:
+                isExist = feature_func(*args, **kwargs)
+                if isExist:
+                    raise error_code.ExistBackendError()
                 return func(*args, **kwargs)
             else:
                 return func(*args, **kwargs)
