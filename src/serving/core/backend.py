@@ -1,11 +1,21 @@
-import redis
 import logging
-import importlib
 from serving import utils
 from serving.core import runtime
 from serving.core import regulator
 from serving.backend import supported_backend as sb
 from settings import settings
+from serving.core.error_code import ExistBackendError, ReloadModelOnBackendError, TerminateBackendError, \
+    CreateAndLoadModelError, FullHashValueError, ConstrainBackendInfoError,ListOneBackendError
+
+
+def createAndLoadModelV2(info):
+    fullhash = info['model']['fullhash']
+    full = fullhash.split('-')
+    if len(full) < 2:
+        raise FullHashValueError(msg=FullHashValueError.msg)
+    info['model']['implhash'] = full[0]
+    info['model']['version'] = full[1]
+    return createAndLoadModel(info)
 
 
 def createAndLoadModel(info):
@@ -18,18 +28,27 @@ def createAndLoadModel(info):
             info['bid'] = backend_request['bid']
             return reloadModelOnBackend(info)
         else:
-            ret = initializeBackend(backend_request)
+            model_request = {'implhash': info['model']['implhash'], 'version': info['model']['version']}
+            ret = initializeBackend(backend_request, passby_model=model_request)
             createdBackendBid = ret['msg']
             info['bid'] = createdBackendBid
             return reloadModelOnBackend(info)
+    except ExistBackendError as e:
+        raise ExistBackendError(msg=repr(e))
+    except ReloadModelOnBackendError as e:
+        raise ReloadModelOnBackendError(msg=repr(e))
+    except TerminateBackendError as e:
+        raise TerminateBackendError(msg=repr(e))
+    except ConstrainBackendInfoError as e:
+        raise ConstrainBackendInfoError(msg=repr(e))
     except Exception as e:
-        msg = "failed to create and load model: {}".format(repr(e))
         if createdBackendBid is not None:
             terminateBackend({'bid': createdBackendBid})
-        raise RuntimeError(msg)
+        raise CreateAndLoadModelError(msg=repr(e))
 
-@utils.gate(runtime.FGs['enable_regulator'], regulator.LimitBackendInstance)
-def initializeBackend(info):
+
+@utils.limit(runtime.FGs['enable_regulator'], regulator.CheckBackendExistInstance)
+def initializeBackend(info, passby_model=None):
     configs = parseValidBackendInfo(info)
     # configs['queue.in'] = redis.Redis(connection_pool=runtime.Conns['redis.pool'])
     # TODO(arth): move to LoadModels
@@ -62,11 +81,12 @@ def initializeBackend(info):
         backend_instance = tflite.TfLiteBackend(configs)
 
     if backend_instance is None:
-        raise RuntimeError("unknown error, failed to create backend")
+        raise CreateAndLoadModelError(msg="unknown error, failed to create backend")
     bid = str(len(runtime.BEs))
     runtime.BEs[bid] = backend_instance
     logging.debug(runtime.BEs)
     return {'code': 0, 'msg': bid}
+
 
 def listAllBackends():
     status_list = []
@@ -74,34 +94,37 @@ def listAllBackends():
         status_list.append(listOneBackend({'bid': key}))
     return {'backends': status_list}
 
+
 def listOneBackend(info):
     backend_request = parseValidBackendInfo(info)
     backend_instance = runtime.BEs.get(backend_request['bid'])
     if backend_instance is None:
-        raise RuntimeError("failed to find backend")
+        raise ListOneBackendError(msg="failed to find backend")
     else:
         return backend_instance.reportStatus()
+
 
 def reloadModelOnBackend(info):
     backend_request = parseValidBackendInfo(info)
     backend_instance = runtime.BEs.get(backend_request['bid'])
     if backend_instance is None:
-        raise RuntimeError("failed to find backend")
+        raise ReloadModelOnBackendError(msg="failed to find backend")
     else:
         backend_instance.run(info)
         return {'code': 0, 'msg': str(backend_request['bid'])}
+
 
 def terminateBackend(info):
     backend_request = parseValidBackendInfo(info)
     backend_instance = runtime.BEs.get(backend_request['bid'])
     if backend_instance is None:
-        raise RuntimeError("failed to find backend")
+        raise TerminateBackendError(msg="failed to find backend")
     else:
         ret = backend_instance.terminate()
         del runtime.BEs[backend_request['bid']]
         return ret
 
-#
+
 def parseValidBackendInfo(info):
     temp_backend_info = info
     if temp_backend_info.get('storage') is None:

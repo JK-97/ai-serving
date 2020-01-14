@@ -5,13 +5,10 @@
 """
 
 import os
-import logging
 import json
 from rknn.api import RKNN
 from serving import utils
 from serving.backend import abstract_backend as ab
-from settings import settings
-
 
 
 class RKNNPyBackend(ab.AbstractBackend):
@@ -38,10 +35,11 @@ class RKNNPyBackend(ab.AbstractBackend):
         if batchsize != 1:
             raise Exception("batchsize unequal one")
         id_lists, feed_lists, passby_lists = self.__buildBatch(input_queue, batchsize)
+        if feed_lists is None:
+            return id_lists, [None] * batchsize
         infer_lists = self.__inferBatch(feed_lists)
         result_lists = self.__processBatch(passby_lists, infer_lists, batchsize)
         return id_lists, result_lists
-
 
     @utils.profiler_timer("RKNNPyBackend::__buildBatch")
     def __buildBatch(self, in_queue, batchsize):
@@ -55,31 +53,27 @@ class RKNNPyBackend(ab.AbstractBackend):
             predp_frame = json.loads(package[-1].decode("utf-8"))
             id_lists[index] = predp_frame['uuid']
             predp_data[index] = self.predp.pre_dataprocess(predp_frame)
-            feed_lists[index] = predp_data[index]['feed_list']
-            passby_lists[index] = predp_data[index]['passby']
+            if predp_data[index] is not None:
+                feed_lists[index] = predp_data[index]['feed_list']
+                passby_lists[index] = predp_data[index]['passby']
         return id_lists, feed_lists[index], passby_lists[index]
-
 
     @utils.profiler_timer("RKNNPyBackend::__inferBatch")
     def __inferBatch(self, feed_lists):
         return self.model_object.inference(feed_lists)
 
-
     @utils.profiler_timer("RKNNPyBackend::__processBatch")
     def __processBatch(self, passby_lists, infer_lists, batchsize):
         labels = self.model_configs.get('labels')
-        threshold = self.model_configs.get('threshold')
+        threshold = [float(i) for i in self.model_configs.get('threshold')]
         mapping = self.model_configs.get('mapping')
         result_lists = [None] * batchsize
         post_frame = {
-            'inputs': [infer_lists[0][0],
-                      infer_lists[1][0],
-                      infer_lists[2][0]],
             'infers': infer_lists,
             'labels': labels,
             'passby': passby_lists,
             'threshold': threshold,
             'mapping': mapping,
-            }
-        result_lists[0] = self.postdp.post_dataprocess(post_frame) 
+        }
+        result_lists[0] = self.postdp.post_dataprocess(post_frame)
         return result_lists

@@ -15,6 +15,7 @@ service Backend {
   rpc TerminateBackend (BackendInfo) returns (ResultReply) {}
 
   rpc CreateAndLoadModel (FullLoadRequest) returns (ResultReply) {}
+  rpc CreateAndLoadModelV2 (FullLoadRequestV2) returns (ResultReply) {}
 }
 
 message SupportedReply {
@@ -36,6 +37,7 @@ message BackendStatus {
   BackendInfo info = 1;
   string status = 2;
   string msg = 3;
+  ModelInfo model =4;
 }
 
 message BackendList {
@@ -58,3 +60,10 @@ message FullLoadRequest {
   string pvtkey = 5;
 }
 
+message FullLoadRequestV2 {
+  BackendInfo backend = 1;
+  ModelInfoBrief model = 2;
+  uint32 encrypted = 3;
+  string a64key = 4;
+  string pvtkey = 5;
+}

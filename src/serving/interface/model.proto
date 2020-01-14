@@ -13,6 +13,7 @@ service Model {
 
   rpc ExportModelImage (ModelInfo) returns (ResultReply) {}
   rpc ImportModelDistro (ModelInfo) returns (ResultReply) {}
+  rpc ImportModelDistroV2 (ModelInfoBrief) returns (ResultReply) {}
 }
 
 /*
@@ -55,6 +56,24 @@ message ModelInfo {
   repeated string mapping = 10;
   string modelext = 11;
   string disthash = 12;
+}
+
+message ModelInfoBrief {
+  string name = 1;
+  repeated string labels = 2;
+  string bundle = 3;
+
+  string head = 4;
+  string bone = 5;
+  string impl = 6;
+  string fullhash = 7; // implhash-version  (split - )
+  string implhash = 8;
+  string version = 9;
+
+  repeated string threshold = 10;
+  repeated string mapping = 11;
+  string modelext = 12;
+  string disthash = 13;
 }
 
 message ModelList {

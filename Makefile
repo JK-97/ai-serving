@@ -11,8 +11,8 @@ DIR=src/serving/interface
 
 protoc:
 	# https://grpc.io/docs/quickstart/python/
-	python3 -m pip install grpcio==$(GRPCIO_VER)
-	python3 -m pip install grpcio-tools==$(GRPCIO_TOOLS_VER)
+	python3 -m pip install grpcio
+	#python3 -m pip install grpcio-tools==$(GRPCIO_TOOLS_VER)
 
 message-linux-amd64:
 	srcs="backend connectivity inference model exchange reader"; \
