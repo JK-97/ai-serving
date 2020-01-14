@@ -112,7 +112,7 @@ def detectImageSets(r, client, type):
         raise RuntimeError("failed to detect imageSets")
 
 
-def tragger(data):
+def trigger(data):
     rPool = redis.ConnectionPool(host="127.0.0.1", port=6379, db=5)
     r = redis.Redis(host="localhost", port=6379, connection_pool=rPool)
     client = mqtt.Client()

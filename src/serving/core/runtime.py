@@ -1,5 +1,4 @@
 import os
-import uuid
 import redis
 import logging
 import importlib
@@ -42,6 +41,8 @@ def default_dev_validator():
 @utils.gate(FGs['enable_device_validation'], default_dev_validator)
 def loadPlugins(customized_plugins={}):
     Ps['encbase64'] = importlib.import_module('serving.plugin.encbase64')
+    Ps['reader'] = importlib.import_module('serving.plugin.reader')
+    Ps['trigger'] = importlib.import_module('serving.plugin.trigger')
     for k, v in customized_plugins:
         Ps[k] = v
     logging.debug("Loaded plugins: {}".format(Ps))
