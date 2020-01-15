@@ -7,8 +7,9 @@ import os
 
 settings = {
     'port': "[::]:50051",
-    'storage': "/home/zhouyou/jxserving_storage",
-    'preheat': "/home/zhouyou/jxserving_storage/preheat.jpeg",
+    'storage': "/home/hebi",
+    'preheat': "/home/hebi/test.jpeg",
+
     'redis.host': "localhost",
     'redis.port': "6379",
 

@@ -10,6 +10,7 @@ import logging
 import tensorflow as tf
 from enum import Enum, unique
 from serving import utils
+from serving.core import runtime
 from serving.backend import abstract_backend as ab
 import numpy as np
 
@@ -112,16 +113,20 @@ class TfPyBackend(ab.AbstractBackend):
         passby_lists = [None] * batchsize
         input_type = json.loads(self.model_configs['modelext']).get('tensors')['input_type']
 
-
         for i in range(batchsize):
             package = self.configs['queue.in'].blpop(in_queue)
             if package is not None:
                 # blopop returns: (b'key', b'{...}')
                 predp_frame = json.loads(package[-1].decode("utf-8"))
                 id_lists[i] = predp_frame['uuid']
-                predp_data[i] = self.predp.pre_dataprocess(predp_frame)
+                #image_type inclue preheat, local, remote, stream, imageSets
+                if predp_frame['image_type'] == "imageSets":
+                    image_id = runtime.Task_Info[0]
+                    image_frame = runtime.Images_pool[image_id]
+                else:
+                    image_frame = runtime.Images_pool[predp_frame['image_type']]
+                predp_data[i] = self.predp.pre_dataprocess(image_frame)
                 passby_lists[i] = predp_data[i]['passby']
-
                 for j in range(len(self.input_tensor_vec)):
                     feed_lists[j][i] = np.squeeze(predp_data[i]['feed_list'][j])
 
