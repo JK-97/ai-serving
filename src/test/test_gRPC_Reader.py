@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import grpc
+import paho.mqtt.client as mqtt
+import json
 
 from google.protobuf.json_format import ParseDict
 
@@ -37,14 +39,29 @@ def TestVideo(stub):
     response = stub.GetReader(ParseDict(load_info, re_pb2.ReadRequest()))
     print("grpc.Reader >>>", response.code, response.msg)
 
+
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code: " + str(rc))
+
+def on_message(client, userdata, msg):
+    if json.loads(msg.payload.decode("utf-8")).get('data'):
+        print(msg.topic + " " + str(msg.payload))
+
+
 def run():
     channel = grpc.insecure_channel("localhost:50051")
     re_stub = re_pb2_grpc.ReaderStub(channel)
-    TestStream(re_stub)
+
+    #TestStream(re_stub)
     #TestImageSets(re_stub)
-    #TestVideo(re_stub)
+    TestVideo(re_stub)
 
-
+    client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect('127.0.0.1', 1883, 600)
+    client.subscribe('VideoCapture', qos=0)
+    client.loop_forever()
 
 
 if __name__ == '__main__':

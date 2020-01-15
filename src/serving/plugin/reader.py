@@ -21,11 +21,12 @@ def handlerStream(data):
             tar.close()
             cap = cv2.VideoCapture(video_path)
         else:
-            cap = cv2.VideoCapture(data.get('path'))
+            video_path = data.get('path')
+            cap = cv2.VideoCapture(video_path)
         while True:
             ret, frame = cap.read()
             if not ret:
-                cap = cv2.VideoCapture(data.get('path'))
+                cap = cv2.VideoCapture(video_path)
                 continue
             #cv2.imshow('capture', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
