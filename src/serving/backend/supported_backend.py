@@ -13,6 +13,7 @@ class Type(Enum):
     TfLite  = 'tensorflow-lite'
     Torch   = 'pytorch'
     RknnPy  = 'rknn'
+    Generic = 'traditional-generic'
 
 def Validator(value):
     try:
