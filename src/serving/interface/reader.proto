@@ -1,0 +1,21 @@
+// reader.proto
+syntax = "proto3";
+import "common.proto";
+
+package trueno;
+
+service Reader {
+  rpc GetReader(ReadRequest) returns (ResultReply) {}
+}
+
+message  ReadRequest {
+  string source = 1;
+  string type = 2;
+  string path = 3;
+}
+
+message DetectResult {
+  string type = 1;
+  string result = 2;
+}
+

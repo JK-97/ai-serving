@@ -7,6 +7,7 @@
 import os
 import time
 import logging
+import cv2
 from multiprocessing import Process
 from enum import Enum, unique # auto is available after python 3.7
 from serving.core import error_code
@@ -102,3 +103,6 @@ def getKey(key, dicts, env_key='', v=None, level=Access.Essential):
             raise RuntimeError("Expected {}, but get {}".format(v, value))
     # return
     return value
+
+def imread_image(path):
+    return cv2.imread(path)
