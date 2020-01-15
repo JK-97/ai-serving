@@ -80,6 +80,10 @@ def initializeBackend(info, passby_model=None):
         from serving.backend import tensorflow_lite as tflite
         backend_instance = tflite.TfLiteBackend(configs)
 
+    if impl_backend == sb.Type.Generic:
+       from serving.backend import traditional_generic as tradcv
+       backend_instance = tradcv.TraditionalGenericBackend(configs)
+
     if backend_instance is None:
         raise CreateAndLoadModelError(msg="unknown error, failed to create backend")
     bid = str(len(runtime.BEs))
