@@ -23,9 +23,11 @@ def CheckBackendExistInstance(info, passby_model):
                 and backendInfo['model']['implhash'] == passby_model['implhash']:
             return True
         else:
-            backend.terminateBackend(info)
+            return False
+#            info['bid'] = key
+#            backend.terminateBackend(info)
 
 
 def LimitBackendInstance():
-    if len(runtime.BEs) + 1 > 1:
+    if len(runtime.BEs) + 1 > 3:
         raise LimitBackendError(msg="backend instance exceed limitation")
