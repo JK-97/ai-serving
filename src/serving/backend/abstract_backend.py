@@ -101,7 +101,10 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             sys.path.append(self.model_path)
             self.predp = importlib.import_module('pre_dataprocess')
             self.postdp = importlib.import_module('post_dataprocess')
+            self.predp = importlib.reload(self.predp)
+            self.postdp = importlib.reload(self.postdp)
             self.state.value = State.Loaded.value
+            sys.path.remove(self.model_path)
 
             # start inference process
             for i in range(self.backend_configs['inferprocnum']):
