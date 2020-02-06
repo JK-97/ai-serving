@@ -11,10 +11,10 @@ from PIL import Image
 from io import BytesIO
 from google.protobuf.json_format import ParseDict
 
-from serving.interface import backend_pb2 as be_pb2
-from serving.interface import backend_pb2_grpc as be_pb2_grpc
-from serving.interface import inference_pb2 as inf_pb2
-from serving.interface import inference_pb2_grpc as inf_pb2_grpc
+from interface import backend_pb2 as be_pb2
+from interface import backend_pb2_grpc as be_pb2_grpc
+from interface import inference_pb2 as inf_pb2
+from interface import inference_pb2_grpc as inf_pb2_grpc
 
 
 def createAndLoadModelV2(stub):
@@ -58,7 +58,7 @@ def listOne(stub, return_bid):
     return json.loads(response.status)["0"]
 
 
-test_image = "/home/zhouyou/jxserving_storage/preheat.jpeg"
+test_image = "/home/hebi/test.jpeg"
 
 
 def inferLocal(inf_stub, return_bid, r):
@@ -102,7 +102,7 @@ def run():
     be_stub = be_pb2_grpc.BackendStub(channel)
     inf_stub = inf_pb2_grpc.InferenceStub(channel)
 
-    ret = createAndLoadModelV2(be_stub)
+    ret = createAndLoadModel(be_stub)
 
     status = 0
     while status != 4:

@@ -2,6 +2,7 @@ import os
 import redis
 import logging
 import importlib
+import multiprocessing
 from serving import utils
 from serving.core import sandbox
 from settings import settings
@@ -20,6 +21,8 @@ Ps = {
 }
 
 BEs = {}
+Images_pool = multiprocessing.Manager().dict()
+ImageSets_info = multiprocessing.Manager().list()
 Conns = {
     'redis.pool': redis.ConnectionPool(
         host=utils.getKey('redis.host', dicts=settings),
@@ -46,6 +49,8 @@ def default_dev_validator():
 @utils.gate(FGs['enable_device_validation'], default_dev_validator)
 def loadPlugins(customized_plugins={}):
     Ps['encbase64'] = importlib.import_module('serving.plugin.encbase64')
+    Ps['reader'] = importlib.import_module('serving.plugin.reader')
+    Ps['trigger'] = importlib.import_module('serving.plugin.trigger')
     for k, v in customized_plugins:
         Ps[k] = v
     logging.debug("Loaded plugins: {}".format(Ps))
