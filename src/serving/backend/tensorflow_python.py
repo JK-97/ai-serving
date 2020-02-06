@@ -121,7 +121,7 @@ class TfPyBackend(ab.AbstractBackend):
                 id_lists[i] = predp_frame['uuid']
                 #image_type inclue preheat, local, remote, stream, imageSets
                 if predp_frame['image_type'] == "imageSets":
-                    image_id = runtime.Task_Info[0]
+                    image_id = runtime.ImageSets_info[0]
                     image_frame = runtime.Images_pool[image_id]
                 else:
                     image_frame = runtime.Images_pool[predp_frame['image_type']]

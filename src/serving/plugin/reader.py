@@ -59,7 +59,7 @@ def handlerImageSets(data):
         for image_name in os.listdir(image_dir):
             image_id = str(uuid.uuid4())
             runtime.Images_pool[image_id] = utils.imread_image(image_dir + image_name)
-            runtime.Task_Info.append(image_id)
+            runtime.ImageSets_info.append(image_id)
     except Exception as e:
         logging.exception(e)
         raise RuntimeError("failed to handler ImageSets")
@@ -68,7 +68,7 @@ def reader(data):
     if data.get("source") == "imageSets":
         handlerImageSets(data)
 
-    if data.get("source") == "stream" or "video":
+    if data.get("source") == "stream" or data.get("source") == "video":
         handlerStream(data)
 
 

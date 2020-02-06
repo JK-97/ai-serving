@@ -76,11 +76,10 @@ def detectStream(r, client):
 
 def detectImageSets(r, client, type):
     try:
+        mq_data = {}
         mq_lists = []
         while True:
-            if runtime.Task_Info:
-                image_id = runtime.Task_Info[0]
-                frame = runtime.Images_pool[image_id]
+            if runtime.ImageSets_info:
                 auuid = str(uuid.uuid4())
                 data = {
                     "bid": "0",
@@ -88,6 +87,8 @@ def detectImageSets(r, client, type):
                     "type": "imageSets",
                 }
                 inference.inferenceLocal(data)
+                image_id = runtime.ImageSets_info[0]
+                frame = runtime.Images_pool[image_id]
                 v = None
                 while v is None:
                     v = r.get(auuid)
@@ -101,12 +102,21 @@ def detectImageSets(r, client, type):
                         else:
                             continue
                     else:
-                        mq_data = drawFrame(v, frame)
+                        if v is not None and len(v):
+                            mq_data = drawFrame(v, frame)
+                        if v is not None and not len(v):
+                            mq_data = {"data": []}
                         mq_lists.append(mq_data)
 
-                del(runtime.Task_Info[0])
+                del(runtime.Images_pool[image_id])
+                del(runtime.ImageSets_info[0])
                 if json.loads(v.decode("utf-8")):
                     logging.debug(v)
+                if not runtime.ImageSets_info:
+                    logging.debug("detect imagsSets ending")
+                    if type != 'real':
+                        client.publish("VideoCapture", json.dumps(mq_lists))
+                    break
     except Exception as e:
         logging.exception(e)
         raise RuntimeError("failed to detect imageSets")
