@@ -4,12 +4,15 @@ from .interface import exchange_pb2_grpc as exchange
 from .interface import inference_pb2_grpc as inference
 #import interfaces.dataset_pb2_grpc as dataset
 from .interface import model_pb2_grpc as model
+from .interface import reader_pb2_grpc as reader
+
 
 from .handler import backend as hbe
 from .handler import connectivity as hconn
 from .handler import exchange as hexc
 from .handler import inference as hinf
 from .handler import model as hm
+from .handler import reader as hr
 
 def register_response(server):
     backend.add_BackendServicer_to_server(hbe.Backend(), server)
@@ -17,3 +20,5 @@ def register_response(server):
     exchange.add_ExchangeServicer_to_server(hexc.Exchange(), server)
     inference.add_InferenceServicer_to_server(hinf.Inference(), server)
     model.add_ModelServicer_to_server(hm.Model(), server)
+    reader.add_ReaderServicer_to_server(hr.Reader(), server)
+

@@ -15,7 +15,7 @@ protoc:
 	#python3 -m pip install grpcio-tools==$(GRPCIO_TOOLS_VER)
 
 message-linux-amd64:
-	srcs="backend connectivity inference model exchange"; \
+	srcs="backend connectivity inference model exchange reader"; \
 	for proto_file in common $$srcs; do \
 		echo "building:" $(DIR)/$$proto_file.proto; \
 		python3 -m grpc_tools.protoc -I$(DIR) --python_out=$(DIR) --grpc_python_out=$(DIR) $(DIR)/$$proto_file.proto; \

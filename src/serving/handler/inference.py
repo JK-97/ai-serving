@@ -6,7 +6,7 @@ from serving.core import inference, error_reply
 from serving.core.error_code import InferenceDataError, RunTimeException
 from ..interface import common_pb2 as c_pb2
 from ..interface import inference_pb2_grpc as inf_pb2_grpc
-
+from serving.utils import process
 
 class Inference(inf_pb2_grpc.InferenceServicer):
     def InferenceLocal(self, request, context):
