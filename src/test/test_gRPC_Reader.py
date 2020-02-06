@@ -14,7 +14,7 @@ def TestStream(stub):
     load_info = {
         'source': "stream",
         'type': "real",
-        'path': "rtsp://admin:jiangxing123@10.55.2.113:554/mpeg4/ch1/sub/"
+        'path': "rtmp://10.55.5.74/live/usb0"
     }
     response = stub.GetReader(ParseDict(load_info, re_pb2.ReadRequest()))
     print("grpc.Reader >>>", response.code, response.msg)
@@ -53,8 +53,8 @@ def run():
     re_stub = re_pb2_grpc.ReaderStub(channel)
 
     #TestStream(re_stub)
-    #TestImageSets(re_stub)
-    TestVideo(re_stub)
+    TestImageSets(re_stub)
+    #TestVideo(re_stub)
 
     client = mqtt.Client()
     client.on_connect = on_connect
