@@ -13,9 +13,10 @@ def inferenceLocal(data):
     print(data)
     data_id = data.get('uuid')
     data_src = data.get('path')
+    data_extra = data.get('extra')
     if data_id is None or data_src is None:
         raise InferenceDataError(msg="lack of data")
-    backend_instance.enqueueData({'uuid': data_id, 'path': data_src})
+    backend_instance.enqueueData({'uuid': data_id, 'path': data_src, 'extra': data_extra})
 
 
 @utils.gate(runtime.FGs['use_native_stat'], runtime.Ps['native_stat'])
@@ -26,6 +27,7 @@ def inferenceRemote(data):
     data_id = data.get('uuid')
     data_src = data.get('base64')
     data_type = data.get('type')
+    data_extra = data.get('extra')
 
     if data_id is None or data_src is None or data_type is None:
         raise InferenceDataError(msg="lack of data")
@@ -35,4 +37,4 @@ def inferenceRemote(data):
     ret = runtime.Ps['encbase64'].to_image(data_src, tmp_file)
     if ret['code'] != 0:
         raise InferenceDataError(msg="failed to dump remote data")
-    backend_instance.enqueueData({'uuid': data_id, 'path': tmp_file})
+    backend_instance.enqueueData({'uuid': data_id, 'path': tmp_file, 'extra': data_extra})

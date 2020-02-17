@@ -29,5 +29,6 @@ message InferRequest {
   string path = 3;
   string type = 4;
   string base64 = 5;
+  string extra = 6;
 }
 
