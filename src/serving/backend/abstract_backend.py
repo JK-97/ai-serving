@@ -147,13 +147,14 @@ class AbstractBackend(metaclass=abc.ABCMeta):
                 self._loadParameter(switch_configs)
             # preheat
             worker_queue_id = self.model_configs['implhash'] + self.model_configs['version']
+            """
             if self.backend_configs.get('preheat') is not None:
                 load_status.value = Status.Preheating.value
                 self.enqueueData({'uuid': "preheat", 'path': self.backend_configs['preheat']})
                 logging.debug("preheating _inferData")
                 self._inferData(worker_queue_id, 1)
                 logging.debug("preheated _inferData")
-
+            """
             # predicting loop
             load_status.value = Status.Running.value
             while True:
