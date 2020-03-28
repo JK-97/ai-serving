@@ -1,9 +1,9 @@
-# JX Serving
+# AI-Serving
 
 ## 概述
-JX Serving 是一套自洽的智慧服务SaaS平台。
+AI-Serving 是一套自洽的智慧服务SaaS平台。
 
-JX Serving 由两个相互独立的组件构成：JX Serving OnBoard 和 JX Serving OnCloud，
+AI-Serving 由两个相互独立的组件构成：AI-Serving OnBoard 和 AI-Serving OnCloud，
 * OnBoard组件 是核心计算模块，提供一致的深度神经网络、计算机视觉等算法调用接口
 * OnCloud组件 通常部署在中心节点上，是对模型、算法进行管理的模块
 
@@ -37,7 +37,7 @@ JX Serving 由两个相互独立的组件构成：JX Serving OnBoard 和 JX Serv
 7. 人工干预：对识别结果进行手动更正
 8. 密钥管理：加密处理上传的模型
 
-## 开发JX Serving OnBoard
+## 开发AI-Serving OnBoard
 ### 代码组织结构
 * `src` 目录包括全部源代码
 * `build_release.py`、`setup.py` 用来打包二进制程序
@@ -94,7 +94,7 @@ JX Serving 由两个相互独立的组件构成：JX Serving OnBoard 和 JX Serv
   * [ ] *MXNet*
 
 ### 内存模型
-JXServing 拥有以下模型
+AIServing 拥有以下模型
 ![Memory](svg/memory_cls.svg)
 * `dev_serial` 存储设备的唯一序列号
 * `debug` 开启调试日志
@@ -127,7 +127,7 @@ def function():
 ### 模型Bundle概念
 模型Bundle是一个拥有特定结构文件夹，它存储了所有智慧服务需要的数据
 
-JX Serving拥有以下两种Bundle类型：**Bundle Image**, **Bundle Distro**
+AI-Serving拥有以下两种Bundle类型：**Bundle Image**, **Bundle Distro**
 * Bundle Image: 代表OnCloud存储的模型核心
 * Bundle Distro: 代表OnBoard存储的可直接执行模型
 
@@ -181,7 +181,7 @@ Process的数量 由每个后端对象实例中的`inference_num`决定
 
 #### Serving Bundle
 
-* **JXServing** will automatically serving a model once this model is constrcuted with a conventional structure
+* **AIServing** will automatically serving a model once this model is constrcuted with a conventional structure
 
 * Tensorflow (Frozen)
   * `model_core`

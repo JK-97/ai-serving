@@ -1,20 +1,22 @@
 """
-  JXServing Utils
+  AI-Serving Utils
 
-  Contact: songdanyang@jiangxing.ai
+  Contact: 1179160244@qq.com
 """
 
 import os
 import time
 import logging
 from multiprocessing import Process
-from enum import Enum, unique # auto is available after python 3.7
+from enum import Enum, unique  # auto is available after python 3.7
 from serving.core import error_code
+
 
 @unique
 class Access(Enum):
     Essential = 'essential'
-    Optional  = 'optional'
+    Optional = 'optional'
+
 
 profile = False
 

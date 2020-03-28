@@ -1,13 +1,13 @@
 ## Bundle
 ```mermaid
 classDiagram
-    JXS_Bundle --|> JXS_Bundle_Image
-    JXS_Bundle --|> JXS_Bundle_Distro
-    JXS_Bundle: model file
-    JXS_Bundle: pre_process.py
-    JXS_Bundle: post_process.py
-    JXS_Bundle_Image: configs.json
-    JXS_Bundle_Distro: distros.json
+    AIS_Bundle --|> AIS_Bundle_Image
+    AIS_Bundle --|> AIS_Bundle_Distro
+    AIS_Bundle: model file
+    AIS_Bundle: pre_process.py
+    AIS_Bundle: post_process.py
+    AIS_Bundle_Image: configs.json
+    AIS_Bundle_Distro: distros.json
 ```
 ## Memory
 ```mermaid

@@ -17,6 +17,7 @@ from interface import backend_pb2_grpc as be_pb2_grpc
 from interface import inference_pb2 as inf_pb2
 from interface import inference_pb2_grpc as inf_pb2_grpc
 
+
 def createAndLoadModel(stub):
     load_info = {
         'backend': {'impl': "tensorflow.frozen"},
@@ -26,22 +27,27 @@ def createAndLoadModel(stub):
         },
         'encrypted': 1,
         'a64key': "gWUXbcs1LnW8/RZLkykyGvbncsql1ok4HEvtbI8GW3AwD+V80A+ugF9wWFztuTdtQzvso0TwJR4aaglWoorTbSwlfWpmRST0PGC0OG0xBUkZtBhoJsoctC+nav/R8UozqFPhUrHydjgZfe3RfclOPXqk7krll9SsyZsTEy/M3z/knUKWkUJImZBmOYSWUxbZEpka+Mhocuvnq/HqUaTe4sIPTaaN/tvwtAj4ZMZZz3n9+JNEleUeO/A4cJXRlCFWyrWDxcjkYmH4oIfQGFYrQGKh2mzKRZOSimncoTOqkpJh/IUIJMczqmK0L7OZ3xMIVKQIJ3XVFIPDWkOvcHNzeA==",
-        'pvtkey': "/home/ubuntu/arthur/jxserving/src/serving/core/private.pem",
+        'pvtkey': "/home/ubuntu/jk-97/aiserving/src/serving/core/private.pem",
     }
-    response = stub.CreateAndLoadModel(ParseDict(load_info, be_pb2.FullLoadRequest()))
+    response = stub.CreateAndLoadModel(
+        ParseDict(load_info, be_pb2.FullLoadRequest()))
     print("grpc.backend.createAndLoadModel >>>", response.code, response.msg)
     return response.msg
+
 
 def listOne(stub, return_bid):
     backend_info = {'bid': return_bid}
     response = stub.ListBackend(ParseDict(backend_info, be_pb2.BackendInfo()))
     print("grpc.backend.listBackend >>>",
-        response.info,
-        response.status,
-        response.msg)
+          response.info,
+          response.status,
+          response.msg)
     return json.loads(response.status)["0"]
 
+
 test_image = "/home/ubuntu/ar_example_model/preheat.jpeg"
+
+
 def inferLocal(inf_stub, return_bid, r):
     auuid = str(uuid.uuid4())
     infer = {
@@ -49,12 +55,14 @@ def inferLocal(inf_stub, return_bid, r):
         'uuid': auuid,
         'path': test_image,
     }
-    response = inf_stub.InferenceLocal(ParseDict(infer, inf_pb2.InferRequest()))
+    response = inf_stub.InferenceLocal(
+        ParseDict(infer, inf_pb2.InferRequest()))
     print("grpc.inference.inferenceLocal >>>", response.code, response.msg)
     v = None
     while v is None:
         v = r.get(auuid)
     print(v)
+
 
 def inferRemote(inf_stub, return_bid, r):
     img = Image.open(test_image)
@@ -69,12 +77,14 @@ def inferRemote(inf_stub, return_bid, r):
         'type': "jpg",
         'base64': str(b64str, 'utf-8'),
     }
-    response = inf_stub.InferenceRemote(ParseDict(infer, inf_pb2.InferRequest()))
+    response = inf_stub.InferenceRemote(
+        ParseDict(infer, inf_pb2.InferRequest()))
     print("grpc.inference.inferenceRemote >>>", response.code, response.msg)
     v = None
     while v is None:
         v = r.get(auuid)
     print(v)
+
 
 def run():
     channel = grpc.insecure_channel("localhost:50051")

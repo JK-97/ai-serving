@@ -7,8 +7,8 @@ import os
 
 settings = {
     'port': "[::]:50051",
-    'storage': "/home/zhouyou/jxserving_storage",
-    'preheat': "/home/zhouyou/jxserving_storage/preheat.jpeg",
+    'storage': "/home/jk-97/aiserving_storage",
+    'preheat': "/home/jk-97/aiserving_storage/preheat.jpeg",
     'redis.host': "localhost",
     'redis.port': "6379",
 
@@ -22,4 +22,3 @@ settings = {
 
     'be.rknnpy.target': "rk3399pro",
 }
-

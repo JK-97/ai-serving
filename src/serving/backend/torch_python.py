@@ -1,7 +1,7 @@
 """
-  JXServing PyTorch Backend
+  AIServing PyTorch Backend
 
-  Contact: songdanyang@jiangxing.ai
+  Contact: 1179160244@qq.com
 """
 
 import os
@@ -17,11 +17,10 @@ from serving.backend import abstract_backend as ab
 from settings import settings
 
 
-
 @unique
 class ModelType(Enum):
-    StructureEmbed  = 'structureEmbed'
-    StructureSplit  = 'structureSplit'
+    StructureEmbed = 'structureEmbed'
+    StructureSplit = 'structureSplit'
 
 
 def ModelTypeValidator(value):
@@ -58,7 +57,8 @@ class TorchPyBackend(ab.AbstractBackend):
     @utils.profiler_timer("TorchPyBackend::_loadParameter")
     def _loadParameter(self, load_configs):
         path = os.path.join(self.model_path, "param.pth")
-        device = utils.getKey('be.trpy.device', dicts=settings, level=utils.Access.Optional)
+        device = utils.getKey(
+            'be.trpy.device', dicts=settings, level=utils.Access.Optional)
         if device == None:
             device = 'cpu'
         logging.debug("torch load parameters on: {})".format(device))
@@ -73,7 +73,8 @@ class TorchPyBackend(ab.AbstractBackend):
                     new_state[key] = parameters[key]
                 else:
                     new_state[key] = current_state[key]
-                    logging.warning('not found pre-trained parameters for {}'.format(key))
+                    logging.warning(
+                        'not found pre-trained parameters for {}'.format(key))
             self.model_object.load_state_dict(new_state)
         else:
             self.model_object.load_state_dict(parameters)
@@ -83,9 +84,11 @@ class TorchPyBackend(ab.AbstractBackend):
     def _inferData(self, input_queue, batchsize):
         if batchsize != 1:
             raise Exception("batchsize unequal one")
-        id_lists, feed_lists, passby_lists = self.__buildBatch(input_queue, batchsize)
+        id_lists, feed_lists, passby_lists = self.__buildBatch(
+            input_queue, batchsize)
         infer_lists = self.__inferBatch(feed_lists)
-        result_lists = self.__processBatch(passby_lists, infer_lists, batchsize)
+        result_lists = self.__processBatch(
+            passby_lists, infer_lists, batchsize)
         return id_lists, result_lists
 
     @utils.profiler_timer("TorchPyBackend:::__buildBatch")
@@ -120,7 +123,8 @@ class TorchPyBackend(ab.AbstractBackend):
         return result_lists
 
     def _getDevice(self, load_configs):
-        device = utils.getKey('be.trpy.device', dicts=settings, level=utils.Access.Optional)
+        device = utils.getKey(
+            'be.trpy.device', dicts=settings, level=utils.Access.Optional)
         logging.debug(device)
         if device == None:
             device = 'cpu'
@@ -129,4 +133,3 @@ class TorchPyBackend(ab.AbstractBackend):
             torch.backends.cudnn.benchmark = True
             logging.debug("set torch.backends.cudnn.benchmark = True")
         return torch.device(device)
-

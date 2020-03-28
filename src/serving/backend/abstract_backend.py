@@ -1,7 +1,7 @@
 """
-  JXServing Abstract Backend
+  AIServing Abstract Backend
 
-  Contact: songdanyang@jiangxing.ai
+  Contact: 1179160244@qq.com
 """
 
 import os
@@ -61,10 +61,12 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         self.model_filename = "model_core"
 
         self.configs = {}
-        self.configs['queue.in'] = redis.Redis(connection_pool=runtime.Conns['redis.pool'])
+        self.configs['queue.in'] = redis.Redis(
+            connection_pool=runtime.Conns['redis.pool'])
 
         self.inferproc_th = [None] * self.backend_configs['inferprocnum']
-        self.inferproc_state = [Value('B', Status.Unloaded.value)] * self.backend_configs['inferprocnum']
+        self.inferproc_state = [
+            Value('B', Status.Unloaded.value)] * self.backend_configs['inferprocnum']
 
         self.model_object = None
         self.predp = None
@@ -76,7 +78,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
         try:
             if not runtime.FGs['enable_sandbox'] and bool(utils.getKey('encrypted', dicts=switch_configs)):
                 self.state.value = State.Error.value
-                raise RuntimeError("model is encrypted, but sandbox is not available")
+                raise RuntimeError(
+                    "model is encrypted, but sandbox is not available")
 
             # cleaning state
             self.state.value = State.Cleaning.value
@@ -84,8 +87,10 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             target_implhash = target_model.get('implhash')
             target_version = target_model.get('version')
             if target_implhash is None:
-                target_implhash = model.generateModelImplHashByExtractInfo(target_model)
-            target_model_config = model.loadModelInfoFromStorage(target_implhash, target_version)
+                target_implhash = model.generateModelImplHashByExtractInfo(
+                    target_model)
+            target_model_config = model.loadModelInfoFromStorage(
+                target_implhash, target_version)
             for i in range(self.backend_configs['inferprocnum']):
                 if self.inferproc_th[i] is not None:
                     self.inferproc_th[i].terminate()
@@ -95,7 +100,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             # loading state
             self.state.value = State.Loading.value
             self.model_configs = target_model_config
-            self.model_path = os.path.join(self.backend_configs['storage'], "models", target_implhash, target_version)
+            self.model_path = os.path.join(
+                self.backend_configs['storage'], "models", target_implhash, target_version)
 
             # load customized model pre-process and post-process functions
             sys.path.append(self.model_path)
@@ -123,16 +129,19 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             load_status.value = Status.Loading.value
             is_loaded_param = False
             if runtime.FGs['enable_sandbox'] and bool(switch_configs.get('encrypted')):
-                key = sandbox.sha256_recover(switch_configs['a64key'], switch_configs['pvtkey'])
+                key = sandbox.sha256_recover(
+                    switch_configs['a64key'], switch_configs['pvtkey'])
                 sandbox._decrypt(key,
-                                 os.path.join(self.model_path, self.model_filename),
+                                 os.path.join(self.model_path,
+                                              self.model_filename),
                                  os.path.join(self.model_path, "model_dore"))
                 self.model_filename = "model_dore"
                 try:
                     # TODO(): still exist leaking risks
                     is_loaded_param = self._loadModel(switch_configs)
                 except Exception as e:
-                    os.remove(os.path.join(self.model_path, self.model_filename))
+                    os.remove(os.path.join(
+                        self.model_path, self.model_filename))
                     raise e
                 os.remove(os.path.join(self.model_path, self.model_filename))
             else:
@@ -143,10 +152,12 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             if not is_loaded_param:
                 self._loadParameter(switch_configs)
             # preheat
-            worker_queue_id = self.model_configs['implhash'] + self.model_configs['version']
+            worker_queue_id = self.model_configs['implhash'] + \
+                self.model_configs['version']
             if self.backend_configs.get('preheat') is not None:
                 load_status.value = Status.Preheating.value
-                self.enqueueData({'uuid': "preheat", 'path': self.backend_configs['preheat']})
+                self.enqueueData(
+                    {'uuid': "preheat", 'path': self.backend_configs['preheat']})
                 logging.debug("preheating _inferData")
                 self._inferData(worker_queue_id, 1)
                 logging.debug("preheated _inferData")
@@ -156,9 +167,11 @@ class AbstractBackend(metaclass=abc.ABCMeta):
             while True:
                 if self.state.value == State.Exiting.value:
                     break
-                id_lists, result_lists = self._inferData(worker_queue_id, self.backend_configs['batchsize'])
+                id_lists, result_lists = self._inferData(
+                    worker_queue_id, self.backend_configs['batchsize'])
                 for i in range(self.backend_configs['batchsize']):
-                    self.configs['queue.in'].set(id_lists[i], json.dumps(result_lists[i]))
+                    self.configs['queue.in'].set(
+                        id_lists[i], json.dumps(result_lists[i]))
             load_status.value = Status.Exited.value
         except Exception as e:
             rknn_err_msg = "RKNN_ERR_DEVICE_UNAVAILABLE"
@@ -177,7 +190,8 @@ class AbstractBackend(metaclass=abc.ABCMeta):
 
     def enqueueData(self, infer_data, queue_id=None):
         if queue_id is None:
-            queue_id = self.model_configs['implhash'] + self.model_configs['version']
+            queue_id = self.model_configs['implhash'] + \
+                self.model_configs['version']
         self.configs['queue.in'].rpush(queue_id, json.dumps(infer_data))
 
     def reportStatus(self):
