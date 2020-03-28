@@ -1,7 +1,7 @@
 """
-  JXServing RKNN Backend
+  AIServing RKNN Backend
 
-  Contact: songdanyang@jiangxing.ai
+  Contact: 1179160244@qq.com
 """
 
 import os
@@ -23,7 +23,8 @@ class RKNNPyBackend(ab.AbstractBackend):
         self.model_object.load_rknn(path)
         ret = self.model_object.init_runtime()
         if ret != 0:
-            raise RuntimeError("Failed to initialize RKNN runtime enrvironment")
+            raise RuntimeError(
+                "Failed to initialize RKNN runtime enrvironment")
         return True
 
     @utils.profiler_timer("RKNNPyBackend::_loadParameter")
@@ -34,11 +35,13 @@ class RKNNPyBackend(ab.AbstractBackend):
     def _inferData(self, input_queue, batchsize):
         if batchsize != 1:
             raise Exception("batchsize unequal one")
-        id_lists, feed_lists, passby_lists = self.__buildBatch(input_queue, batchsize)
+        id_lists, feed_lists, passby_lists = self.__buildBatch(
+            input_queue, batchsize)
         if feed_lists is None:
             return id_lists, [None] * batchsize
         infer_lists = self.__inferBatch(feed_lists)
-        result_lists = self.__processBatch(passby_lists, infer_lists, batchsize)
+        result_lists = self.__processBatch(
+            passby_lists, infer_lists, batchsize)
         return id_lists, result_lists
 
     @utils.profiler_timer("RKNNPyBackend::__buildBatch")

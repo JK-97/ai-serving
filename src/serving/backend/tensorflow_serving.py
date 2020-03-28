@@ -1,7 +1,7 @@
 """
-  JXServing Tensorflow Serving Backend
+  AIServing Tensorflow Serving Backend
 
-  Contact: songdanyang@jiangxing.ai
+  Contact: 1179160244@qq.com
 """
 
 import os
@@ -15,9 +15,8 @@ from serving.backend import abstract_backend as ab
 from settings import settings
 
 
-
 class TfSrvBackend(ab.AbstractBackend):
-    def __init__(self, configurations = {}):
+    def __init__(self, configurations={}):
         super().__init__(configurations)
         host = utils.getKey('be.tfsrv.host', dicts=settings)
         port = utils.getKey('be.tfsrv.rest_port', dicts=settings)
@@ -28,7 +27,8 @@ class TfSrvBackend(ab.AbstractBackend):
 
     @utils.profiler_timer("TfSrvBackend::_loadModel")
     def _loadModel(self, load_configs):
-        path = os.path.join(self.backend_configs['storage'], "models", self.model_configs['implhash'])
+        path = os.path.join(
+            self.backend_configs['storage'], "models", self.model_configs['implhash'])
         ver_dirs = os.listdir(path)
         latest_ver = -1
         for d in ver_dirs:
@@ -39,9 +39,11 @@ class TfSrvBackend(ab.AbstractBackend):
                 except ValueError as e:
                     continue
         if latest_ver > 0:
-            logging.info("Using version <{}> of model {}".format(latest_ver, self.model_configs["name"]))
+            logging.info("Using version <{}> of model {}".format(
+                latest_ver, self.model_configs["name"]))
         else:
-            raise RuntimeError("Cannot find a loadable version of {}".format(self.model_configs["name"]))
+            raise RuntimeError("Cannot find a loadable version of {}".format(
+                self.model_configs["name"]))
         self.model_object = "tensorflow-serving"
         return True
 
@@ -53,11 +55,12 @@ class TfSrvBackend(ab.AbstractBackend):
     def _inferData(self, input_queue, batchsize):
         if batchsize != 1:
             raise Exception("batchsize unequal one")
-        id_lists, feed_lists, passby_lists = self.__buildBatch(input_queue, batchsize)
+        id_lists, feed_lists, passby_lists = self.__buildBatch(
+            input_queue, batchsize)
         infer_lists = self.__inferBatch(feed_lists)
-        result_lists = self.__processBatch(passby_lists, infer_lists, batchsize)
+        result_lists = self.__processBatch(
+            passby_lists, infer_lists, batchsize)
         return id_lists, result_lists
-
 
     @utils.profiler_timer("TfSrvBackend::__buildBatch")
     def __buildBatch(self, in_queue, batchsize):
@@ -74,7 +77,6 @@ class TfSrvBackend(ab.AbstractBackend):
             feed_lists[index] = predp_data[index]['feed_list']
             passby_lists[index] = predp_data[index]['passby']
         return id_lists, feed_lists[index], passby_lists[index]
-
 
     @utils.profiler_timer("TfSrvBackend::__inferBatch")
     def __inferBatch(self, feed_lists):
@@ -100,4 +102,3 @@ class TfSrvBackend(ab.AbstractBackend):
         }
         result_lists[index] = self.postdp.post_dataprocess(post_frame)
         return result_lists
-

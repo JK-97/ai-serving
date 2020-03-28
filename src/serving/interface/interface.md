@@ -1,4 +1,4 @@
-# JX Serving GRPC Interface
+# AI-Serving GRPC Interface
 
 ## Interface List
 * common.proto

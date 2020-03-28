@@ -14,14 +14,17 @@ def createModel(model):
 
     if checkModelExist(model['implhash'], model['version']):
         raise RuntimeError("model already exists")
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
-    os.makedirs(os.path.join(storage_path, "models", model['implhash'], model['version']))
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
+    os.makedirs(os.path.join(storage_path, "models",
+                             model['implhash'], model['version']))
     dumpModelInfoToStorage(model['implhash'], model['version'], model)
 
 
 def listModels(simple=False):
     model_list = []
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
     for m in os.listdir(os.path.join(storage_path, "models")):
         for v in os.listdir(os.path.join(storage_path, "models", m)):
             detail = loadModelInfoFromStorage(m, v)
@@ -42,15 +45,18 @@ def updateModel(model):
 def deleteModel(model):
     if model.get('implhash') is None:
         model['implhash'] = generateModelImplHashByExtractInfo(model)
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
-    model_path = os.path.join(storage_path, "models", model['implhash'], model['version'])
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
+    model_path = os.path.join(storage_path, "models",
+                              model['implhash'], model['version'])
     if not os.path.exists(model_path):
         raise DeleteModelError(msg="model not exist")
     shutil.rmtree(model_path)
 
 
 def buildImageBundleFromDistroBundle(model):
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
     if not model.get('implhash'):
         model['implhash'] = generateModelImplHashByExtractInfo(model)
     model_hash = model['implhash']
@@ -60,7 +66,8 @@ def buildImageBundleFromDistroBundle(model):
     tmp_path = os.path.join("/tmp", model_hash)
     if os.path.exists(tmp_path):
         shutil.rmtree(tmp_path)
-    shutil.copytree(os.path.join(storage_path, "models", model_hash, model_version), tmp_path)
+    shutil.copytree(os.path.join(storage_path, "models",
+                                 model_hash, model_version), tmp_path)
 
     # distros.json -> configs.json
     distro = loadModelInfoFromStorage(model_hash, model_version)
@@ -124,20 +131,22 @@ def unpackImageBundleAndImportWithDistro(detail):
     os.remove(os.path.join(content_path, "configs.json"))
 
     # import bundle
-    storage = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+    storage = utils.getKey('storage', dicts=settings, env_key='AISRV_STORAGE')
     target_model_path = os.path.join(storage, "models", given_implhash)
 
     if not os.path.exists(target_model_path):
         os.makedirs(target_model_path)
     if os.path.exists(os.path.join(target_model_path, given_version)):
-        raise ImportModelDistroError(msg="model already exist with specific version")
+        raise ImportModelDistroError(
+            msg="model already exist with specific version")
     shutil.move(content_path, os.path.join(target_model_path, given_version))
     dumpModelInfoToStorage(given_implhash, given_version, detail)
 
 
 #
 def checkModelExist(model_hash, version):
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
     model_path = os.path.join(storage_path, "models", model_hash, version)
     if not os.path.exists(model_path):
         return False
@@ -146,17 +155,21 @@ def checkModelExist(model_hash, version):
 
 def validateModelInfo(model):
     if model['implhash'] != generateModelImplHashByExtractInfo(model):
-        raise ImportModelDistroError(msg="incompatible model, invalid implementation hash")
+        raise ImportModelDistroError(
+            msg="incompatible model, invalid implementation hash")
     if len(model['labels']) != len(model['threshold']) or len(model['labels']) != len(model['mapping']):
-        raise ImportModelDistroError(msg="labels, threshold, mapping incompatible")
+        raise ImportModelDistroError(
+            msg="labels, threshold, mapping incompatible")
 
 
 def loadModelInfoFromStorage(model_hash, version):
     if not checkModelExist(model_hash, version):
         raise ValueError("model not exist")
 
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
-    dist_path = os.path.join(storage_path, "models", model_hash, version, "distros.json")
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
+    dist_path = os.path.join(storage_path, "models",
+                             model_hash, version, "distros.json")
     with open(dist_path, 'r') as dist_file:
         detail = json.loads(dist_file.read())
     return detail
@@ -166,7 +179,8 @@ def dumpModelInfoToStorage(model_hash, version, detail):
     if not checkModelExist(model_hash, version):
         raise ValueError("model not exist")
 
-    storage_path = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+    storage_path = utils.getKey(
+        'storage', dicts=settings, env_key='AISRV_STORAGE')
     with open(os.path.join(storage_path, "models", model_hash, version, "distros.json"), 'w') as dist_file:
         dist_file.write(json.dumps(detail, indent=2))
 

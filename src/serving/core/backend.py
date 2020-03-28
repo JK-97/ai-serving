@@ -5,7 +5,7 @@ from serving.core import regulator
 from serving.backend import supported_backend as sb
 from settings import settings
 from serving.core.error_code import ExistBackendError, ReloadModelOnBackendError, TerminateBackendError, \
-    CreateAndLoadModelError, FullHashValueError, ConstrainBackendInfoError,ListOneBackendError
+    CreateAndLoadModelError, FullHashValueError, ConstrainBackendInfoError, ListOneBackendError
 
 
 def createAndLoadModelV2(info):
@@ -24,12 +24,15 @@ def createAndLoadModel(info):
         backend_request = parseValidBackendInfo(info['backend'])
         backend_instance = runtime.BEs.get(backend_request.get('bid'))
         if backend_instance is not None:
-            logging.warning("called createAndLoadBackends, but give a bid, ignored")
+            logging.warning(
+                "called createAndLoadBackends, but give a bid, ignored")
             info['bid'] = backend_request['bid']
             return reloadModelOnBackend(info)
         else:
-            model_request = {'implhash': info['model']['implhash'], 'version': info['model']['version']}
-            ret = initializeBackend(backend_request, passby_model=model_request)
+            model_request = {
+                'implhash': info['model']['implhash'], 'version': info['model']['version']}
+            ret = initializeBackend(
+                backend_request, passby_model=model_request)
             createdBackendBid = ret['msg']
             info['bid'] = createdBackendBid
             return reloadModelOnBackend(info)
@@ -58,7 +61,8 @@ def initializeBackend(info, passby_model=None):
     #     configs['pvt'] = utils.getKey('pvtpth', dicts=init_data, level=utils.Access.Optional)
 
     backend_instance = None
-    impl_backend = utils.getKey('m', dicts={'m': str.split(configs['impl'], ".")[0]}, v=sb.Validator)
+    impl_backend = utils.getKey(
+        'm', dicts={'m': str.split(configs['impl'], ".")[0]}, v=sb.Validator)
 
     if impl_backend == sb.Type.TfPy:
         from serving.backend import tensorflow_python as tfpy
@@ -81,7 +85,8 @@ def initializeBackend(info, passby_model=None):
         backend_instance = tflite.TfLiteBackend(configs)
 
     if backend_instance is None:
-        raise CreateAndLoadModelError(msg="unknown error, failed to create backend")
+        raise CreateAndLoadModelError(
+            msg="unknown error, failed to create backend")
     bid = str(len(runtime.BEs))
     runtime.BEs[bid] = backend_instance
     logging.debug(runtime.BEs)
@@ -128,7 +133,8 @@ def terminateBackend(info):
 def parseValidBackendInfo(info):
     temp_backend_info = info
     if temp_backend_info.get('storage') is None:
-        temp_backend_info['storage'] = utils.getKey('storage', dicts=settings, env_key='JXSRV_STORAGE')
+        temp_backend_info['storage'] = utils.getKey(
+            'storage', dicts=settings, env_key='AISRV_STORAGE')
     if temp_backend_info.get('preheat') is None:
         temp_backend_info['preheat'] = utils.getKey('preheat', dicts=settings)
     if temp_backend_info.get('batchsize') is None:

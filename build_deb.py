@@ -1,5 +1,6 @@
 import os
-import sys, platform
+import sys
+import platform
 
 
 micro_arch = platform.machine()
@@ -36,9 +37,9 @@ print(">> Building", version, "in:", arch, "...")
 print(">> Constructing...")
 os.system("mkdir deb")
 os.system("cp -r DEBIAN deb/")
-os.system("cp -r release-pack deb/jxserving")
-os.system("cp VERSION deb/jxserving/")
-os.system("cp CHANGELOG deb/jxserving/")
+os.system("cp -r release-pack deb/aiserving")
+os.system("cp VERSION deb/aiserving/")
+os.system("cp CHANGELOG deb/aiserving/")
 ctrl_content = None
 with open("deb/DEBIAN/control", 'r') as ctrl_file:
     ctrl_content = ctrl_file.read()

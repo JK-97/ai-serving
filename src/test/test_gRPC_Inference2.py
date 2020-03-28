@@ -27,7 +27,8 @@ def createAndLoadModelV2(stub):
         'a64key': "",
         'pvtkey': "",
     }
-    response = stub.CreateAndLoadModelV2(ParseDict(load_info, be_pb2.FullLoadRequestV2()))
+    response = stub.CreateAndLoadModelV2(
+        ParseDict(load_info, be_pb2.FullLoadRequestV2()))
     print("grpc.backend.createAndLoadModel >>>", response.code, response.msg)
     return response.msg
 
@@ -43,7 +44,8 @@ def createAndLoadModel(stub):
         'a64key': "",
         'pvtkey': "",
     }
-    response = stub.CreateAndLoadModel(ParseDict(load_info, be_pb2.FullLoadRequest()))
+    response = stub.CreateAndLoadModel(
+        ParseDict(load_info, be_pb2.FullLoadRequest()))
     print("grpc.backend.createAndLoadModel >>>", response.code, response.msg)
     return response.msg
 
@@ -58,7 +60,7 @@ def listOne(stub, return_bid):
     return json.loads(response.status)["0"]
 
 
-test_image = "/home/zhouyou/jxserving_storage/preheat.jpeg"
+test_image = "/home/jk-97/aiserving_storage/preheat.jpeg"
 
 
 def inferLocal(inf_stub, return_bid, r):
@@ -68,7 +70,8 @@ def inferLocal(inf_stub, return_bid, r):
         'uuid': auuid,
         'path': test_image,
     }
-    response = inf_stub.InferenceLocal(ParseDict(infer, inf_pb2.InferRequest()))
+    response = inf_stub.InferenceLocal(
+        ParseDict(infer, inf_pb2.InferRequest()))
     print("grpc.inference.inferenceLocal >>>", response.code, response.msg)
     v = None
     while v is None:
@@ -89,7 +92,8 @@ def inferRemote(inf_stub, return_bid, r):
         'type': "jpg",
         'base64': str(b64str, 'utf-8'),
     }
-    response = inf_stub.InferenceRemote(ParseDict(infer, inf_pb2.InferRequest()))
+    response = inf_stub.InferenceRemote(
+        ParseDict(infer, inf_pb2.InferRequest()))
     print("grpc.inference.inferenceRemote >>>", response.code, response.msg)
     v = None
     while v is None:

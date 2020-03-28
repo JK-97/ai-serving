@@ -1,4 +1,4 @@
-# JXServing
+# AI-Serving
 
 [Attention] This repo's git ignored all `*.c` file
 
@@ -11,9 +11,9 @@
 
 #### Introduction
 
-* **JXServing OnBoard** is designed to:
+* **AIServing OnBoard** is designed to:
   * provide an unified Deep Learning (DL) detection interface
-  * a delegate agent of **JXServing Cloud**, under a distributed deployment
+  * a delegate agent of **AIServing Cloud**, under a distributed deployment
 
 * Currently supported DL framework:
   * *Tensorflow*, [ ] *Tensorflow Serving*, [ ] *Tensorflow-Lite*
@@ -56,10 +56,10 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
 
 
 #### Concept
-* JXServing Model (JSM)
+* AIServing Model (JSM)
   * JSM is a folder that contains all information
 
-* **JXServing** has the following concepts
+* **AIServing** has the following concepts
   * For each inference, all data will pass through workflow shown as blow
     * Image -> Pre-DataProcess -> DL Backend -> Post-DataProcess
     * Here, Pre/Post-DataProcess are implemented by the model provider
@@ -142,7 +142,7 @@ pip3 install --extra-index-url https://developer.download.nvidia.com/compute/red
 
 #### Serving Bundle
 
-* **JXServing** will automatically serving a model once this model is constrcuted with a conventional structure
+* **AIServing** will automatically serving a model once this model is constrcuted with a conventional structure
 
 * Tensorflow (Frozen)
   * `model_core`
